@@ -5,7 +5,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
 // ポート設定
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 // 静的ファイルの提供
 app.use(express.static('public'));
