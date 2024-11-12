@@ -1,0 +1,130 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Two-Player Puzzle Game</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <button id="startButton">Start Game</button>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        let pieces = []; // ピースの情報を保存
+        let selectedPiece = null;
+        let gameStarted = false;
+
+        // サーバーからのイベントを処理
+        socket.on('startGame', () => {
+            gameStarted = true;
+            startTime = Date.now();
+        });
+
+        socket.on('pieceSelected', ({ pieceId, playerId }) => {
+            // 他プレイヤーの選択を反映
+            highlightPiece(pieceId);
+        });
+
+        socket.on('updatePiece', ({ pieceId, x, y }) => {
+            movePiece(pieceId, x, y);
+        });
+
+        socket.on('gameComplete', ({ totalTime }) => {
+            alert(`Game completed in ${totalTime / 1000} seconds!`);
+        });
+
+        // ゲーム開始
+        startButton.addEventListener('click', () => {
+            if (!gameStarted) {
+                socket.emit('startGame');
+            }
+        });
+
+        // ピース選択と移動処理
+        canvas.addEventListener('mousedown', (e) => {
+            const pieceId = getPieceUnderCursor(e.offsetX, e.offsetY);
+            if (pieceId !== null) {
+                selectedPiece = pieceId;
+                socket.emit('selectPiece', { pieceId, playerId: socket.id });
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (selectedPiece !== null) {
+                movePiece(selectedPiece, e.offsetX, e.offsetY);
+                socket.emit('movePiece', { pieceId: selectedPiece, x: e.offsetX, y: e.offsetY });
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (selectedPiece !== null && isPieceInCorrectPosition(selectedPiece)) {
+                socket.emit('placePiece', { pieceId: selectedPiece });
+                selectedPiece = null;
+            }
+        });
+
+        // マウス位置にあるピースを判定する関数
+        function getPieceUnderCursor(x, y) {
+            // マウス位置 (x, y) にあるピースを探します
+            const piece = pieces.find(piece => {
+                // 各ピースが (x, y) 内にあるかどうかを判定
+                return (
+                    x >= piece.x &&
+                    x <= piece.x + piece.width &&
+                    y >= piece.y &&
+                    y <= piece.y + piece.height
+                );
+            });
+            // ピースが見つかった場合、そのピースのIDを返す
+            return piece ? piece.id : null;
+        }
+
+        function movePiece(pieceId, x, y) {
+            const piece = pieces.find(p => p.id === pieceId);
+            if (piece) {
+                piece.x = x;
+                piece.y = y;
+                drawPieces();
+            }
+        }
+
+        function isPieceInCorrectPosition(pieceId) {
+            const piece = pieces.find(p => p.id === pieceId);
+            if (piece) {
+                // ピースが所定位置にあるかを判定 (例: 誤差範囲内かどうか)
+                return Math.abs(piece.x - piece.targetX) < 5 && Math.abs(piece.y - piece.targetY) < 5;
+            }
+            return false;
+        }
+
+        function drawPieces() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(piece => {
+                ctx.drawImage(piece.image, piece.x, piece.y, piece.width, piece.height);
+            });
+        }
+
+        function highlightPiece(pieceId) {
+            // 選択されているピースをハイライト表示
+            const piece = pieces.find(p => p.id === pieceId);
+            if (piece) {
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(piece.x, piece.y, piece.width, piece.height);
+            }
+        }
+
+        // 初期化処理としてピース情報を設定
+        function initializePieces() {
+            // pieces 配列にピースデータを追加 (例: 各ピースの画像、位置、サイズ、ターゲット位置)
+        }
+
+        initializePieces();
+        drawPieces();
+    </script>
+</body>
+</html>
