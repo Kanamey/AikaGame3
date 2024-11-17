@@ -36,6 +36,7 @@ io.on('connection', (socket) => {
 
   // スタートボタンを押されたときの処理
   socket.on('start game', (data) => {
+    console.log(`Game started by: ${data.participantNumber}${data.participantLetter}`);
     io.emit('game started');
   });
 
@@ -52,8 +53,11 @@ io.on('connection', (socket) => {
     }
     clickStates[data.index].add(socket.id);
 
+    console.log(`Piece ${data.index} is being dragged by: ${[...clickStates[data.index]].join(', ')}`);
+
     // 2人のユーザーが同じピースをクリックしている場合に移動を許可
     if (clickStates[data.index].size >= 2) {
+      console.log(`Piece ${data.index} move allowed`);
       io.emit('allow move', data.index);
     }
   });
@@ -62,7 +66,10 @@ io.on('connection', (socket) => {
   socket.on('end drag', (data) => {
     if (clickStates[data.index]) {
       clickStates[data.index].delete(socket.id);
+      console.log(`Piece ${data.index} is no longer dragged by: ${socket.id}`);
+
       if (clickStates[data.index].size < 2) {
+        console.log(`Piece ${data.index} move stopped`);
         io.emit('stop move', data.index);
       }
     }
@@ -71,6 +78,7 @@ io.on('connection', (socket) => {
   // ピースの移動イベント
   socket.on('piece move', (data) => {
     puzzlePositions[data.index] = { left: data.left, top: data.top }; // サーバーの位置情報を更新
+    console.log(`Piece ${data.index} moved to: left=${data.left}, top=${data.top}`);
     io.emit('piece move', data); // 全クライアントに更新情報を送信
   });
 
@@ -83,7 +91,10 @@ io.on('connection', (socket) => {
     Object.keys(clickStates).forEach((index) => {
       if (clickStates[index].has(socket.id)) {
         clickStates[index].delete(socket.id);
+        console.log(`Piece ${index} no longer clicked by: ${socket.id}`);
+
         if (clickStates[index].size < 2) {
+          console.log(`Piece ${index} move stopped due to disconnection`);
           io.emit('stop move', parseInt(index));
         }
       }
