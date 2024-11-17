@@ -1,4 +1,3 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -54,6 +53,10 @@
       position: absolute;
       pointer-events: none;
       border-radius: 50%;
+      transition: background 0.2s ease;
+    }
+    .cursor.shared {
+      background: blue; /* 共有状態でのカーソル色 */
     }
   </style>
 </head>
@@ -61,7 +64,7 @@
   <div id="controls">
     <select id="participant-number">
       <option value="" disabled selected>参加者番号を選択</option>
-      <option value="test">test</option>
+      <!-- 01から20までの参加者番号 -->
       <option value="01">01</option>
       <option value="02">02</option>
       <option value="03">03</option>
@@ -85,7 +88,6 @@
     </select>
     <select id="participant-letter">
       <option value="" disabled selected>参加者記号を選択</option>
-      <option value="test">test</option>
       <option value="A">A</option>
       <option value="B">B</option>
     </select>
@@ -105,8 +107,8 @@
     const participantLetterSelect = document.getElementById('participant-letter');
     const gridSize = 150;
     const snapTolerance = 20;
-    let gameStartTime = null; // ゲーム開始時間
     const cursors = {}; // 他のプレイヤーのカーソルを保持
+    let gameStartTime = null; // ゲーム開始時間
 
     // スタートボタンのクリックイベント
     startButton.addEventListener('click', () => {
@@ -161,6 +163,14 @@
       }
       cursor.style.left = `${data.position.x}px`;
       cursor.style.top = `${data.position.y}px`;
+
+      // カーソルがピースに重なっているかを確認
+      const overlappingPiece = getOverlappingPiece(data.position.x, data.position.y);
+      if (overlappingPiece) {
+        cursor.classList.add('shared'); // カーソルが同じピースに重なっている場合、色を変える
+      } else {
+        cursor.classList.remove('shared');
+      }
     });
 
     socket.on('user disconnected', (data) => {
@@ -178,6 +188,18 @@
         targetPiece.style.top = `${data.top}px`;
       }
     });
+
+    // カーソル位置がどのピースに重なっているかを確認
+    function getOverlappingPiece(x, y) {
+      const pieces = document.querySelectorAll('.piece');
+      for (const piece of pieces) {
+        const rect = piece.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          return piece;
+        }
+      }
+      return null;
+    }
   </script>
 </body>
 </html>
