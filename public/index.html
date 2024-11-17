@@ -53,7 +53,6 @@
       position: absolute;
       pointer-events: none;
       border-radius: 50%;
-      transition: background 0.2s ease;
     }
     .cursor.shared {
       background: blue; /* 共有状態でのカーソル色 */
@@ -107,8 +106,7 @@
     const participantLetterSelect = document.getElementById('participant-letter');
     const gridSize = 150;
     const snapTolerance = 20;
-    const cursors = {}; // 他のプレイヤーのカーソルを保持
-    let gameStartTime = null; // ゲーム開始時間
+    let canMovePiece = false; // ピースを動かせるかどうかのフラグ
 
     // スタートボタンのクリックイベント
     startButton.addEventListener('click', () => {
@@ -129,7 +127,6 @@
       participantNumberSelect.style.display = 'none';
       participantLetterSelect.style.display = 'none';
       puzzleContainer.style.display = 'block';
-      gameStartTime = Date.now();
     });
 
     // 初期位置情報の受信とピースの配置
@@ -154,12 +151,12 @@
     });
 
     socket.on('mouse move', (data) => {
-      let cursor = cursors[data.id];
+      let cursor = document.getElementById(`cursor-${data.id}`);
       if (!cursor) {
         cursor = document.createElement('div');
         cursor.classList.add('cursor');
+        cursor.id = `cursor-${data.id}`;
         document.body.appendChild(cursor);
-        cursors[data.id] = cursor;
       }
       cursor.style.left = `${data.position.x}px`;
       cursor.style.top = `${data.position.y}px`;
@@ -167,25 +164,53 @@
       // カーソルがピースに重なっているかを確認
       const overlappingPiece = getOverlappingPiece(data.position.x, data.position.y);
       if (overlappingPiece) {
-        cursor.classList.add('shared'); // カーソルが同じピースに重なっている場合、色を変える
+        cursor.classList.add('shared');
       } else {
         cursor.classList.remove('shared');
       }
     });
 
-    socket.on('user disconnected', (data) => {
-      if (cursors[data.id]) {
-        cursors[data.id].remove();
-        delete cursors[data.id];
+    // サーバーからピースの移動許可通知を受け取る
+    socket.on('allow move', (index) => {
+      canMovePiece = true;
+    });
+
+    // サーバーからピースの移動停止通知を受け取る
+    socket.on('stop move', (index) => {
+      canMovePiece = false;
+    });
+
+    // ドラッグ開始
+    document.addEventListener('mousedown', (e) => {
+      const piece = e.target.closest('.piece');
+      if (piece) {
+        socket.emit('start drag', { index: piece.dataset.index });
       }
     });
 
-    // 他のユーザーがピースを動かした場合の処理
-    socket.on('piece move', (data) => {
-      const targetPiece = document.querySelector(`.piece[data-index="${data.index}"]`);
-      if (targetPiece) {
-        targetPiece.style.left = `${data.left}px`;
-        targetPiece.style.top = `${data.top}px`;
+    // ドラッグ終了
+    document.addEventListener('mouseup', (e) => {
+      const piece = e.target.closest('.piece');
+      if (piece) {
+        socket.emit('end drag', { index: piece.dataset.index });
+      }
+    });
+
+    // ピースの移動
+    document.addEventListener('mousemove', (e) => {
+      if (canMovePiece) {
+        const piece = e.target.closest('.piece');
+        if (piece) {
+          piece.style.left = `${e.clientX - piece.offsetWidth / 2}px`;
+          piece.style.top = `${e.clientY - piece.offsetHeight / 2}px`;
+
+          // サーバーに移動情報を送信
+          socket.emit('piece move', {
+            index: piece.dataset.index,
+            left: parseFloat(piece.style.left),
+            top: parseFloat(piece.style.top),
+          });
+        }
       }
     });
 
