@@ -49,11 +49,19 @@ io.on('connection', (socket) => {
   socket.on('start drag', (data) => {
     if (!clickStates[data.index]) {
       clickStates[data.index] = new Set();
+      clickStates[data.index].timestamps = []; // タイムスタンプリストを初期化
     }
     clickStates[data.index].add(socket.id);
+    clickStates[data.index].timestamps.push(Date.now());
 
-    // 2人が同じピースをクリックしているか確認
-    if (clickStates[data.index].size >= 2) {
+    // 現在の時刻を取得して猶予時間内のクリックをフィルタリング
+    const currentTime = Date.now();
+    clickStates[data.index].timestamps = clickStates[data.index].timestamps.filter(
+      (timestamp) => currentTime - timestamp < 100 // 100ms以内のクリックを許容
+    );
+
+    // 2人のユーザーが同じピースをクリックしている場合に移動を許可
+    if (clickStates[data.index].size >= 2 && clickStates[data.index].timestamps.length >= 2) {
       io.emit('allow move', data.index);
     }
   });
