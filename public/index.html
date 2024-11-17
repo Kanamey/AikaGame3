@@ -57,6 +57,9 @@
     .cursor.shared {
       background: blue; /* 共有状態でのカーソル色 */
     }
+    .cursor.both-clicked {
+      background: green; /* 同時クリック状態でのカーソル色 */
+    }
   </style>
 </head>
 <body>
@@ -169,6 +172,13 @@
         cursor.classList.add('shared');
       } else {
         cursor.classList.remove('shared');
+      }
+
+      // 両方のユーザーが同じピースをクリックしているか確認
+      if (canMovePiece) {
+        cursor.classList.add('both-clicked');
+      } else {
+        cursor.classList.remove('both-clicked');
       }
     });
 
