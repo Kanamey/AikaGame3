@@ -186,6 +186,7 @@
     document.addEventListener('mousedown', (e) => {
       const piece = e.target.closest('.piece');
       if (piece && canMovePiece) {
+        console.log(`Dragging started on piece index: ${piece.dataset.index}`); // デバッグログ追加
         isDragging = true;
         currentPiece = piece;
         socket.emit('start drag', { index: piece.dataset.index });
@@ -195,6 +196,7 @@
     // ドラッグ終了
     document.addEventListener('mouseup', (e) => {
       if (isDragging && currentPiece) {
+        console.log(`Dragging ended on piece index: ${currentPiece.dataset.index}`); // デバッグログ追加
         socket.emit('end drag', { index: currentPiece.dataset.index });
         isDragging = false;
         currentPiece = null;
