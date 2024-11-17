@@ -64,6 +64,7 @@
     <select id="participant-number">
       <option value="" disabled selected>参加者番号を選択</option>
       <!-- 01から20までの参加者番号 -->
+      <option value="test">test</option>
       <option value="01">01</option>
       <option value="02">02</option>
       <option value="03">03</option>
@@ -87,6 +88,7 @@
     </select>
     <select id="participant-letter">
       <option value="" disabled selected>参加者記号を選択</option>
+      <option value="test">test</option>
       <option value="A">A</option>
       <option value="B">B</option>
     </select>
@@ -107,6 +109,8 @@
     const gridSize = 150;
     const snapTolerance = 20;
     let canMovePiece = false; // ピースを動かせるかどうかのフラグ
+    let isDragging = false; // ドラッグ中かどうかを判定するフラグ
+    let currentPiece = null; // 現在ドラッグ中のピース
 
     // スタートボタンのクリックイベント
     startButton.addEventListener('click', () => {
@@ -183,34 +187,34 @@
     // ドラッグ開始
     document.addEventListener('mousedown', (e) => {
       const piece = e.target.closest('.piece');
-      if (piece) {
+      if (piece && canMovePiece) {
+        isDragging = true;
+        currentPiece = piece;
         socket.emit('start drag', { index: piece.dataset.index });
       }
     });
 
     // ドラッグ終了
     document.addEventListener('mouseup', (e) => {
-      const piece = e.target.closest('.piece');
-      if (piece) {
-        socket.emit('end drag', { index: piece.dataset.index });
+      if (isDragging && currentPiece) {
+        socket.emit('end drag', { index: currentPiece.dataset.index });
+        isDragging = false;
+        currentPiece = null;
       }
     });
 
     // ピースの移動
     document.addEventListener('mousemove', (e) => {
-      if (canMovePiece) {
-        const piece = e.target.closest('.piece');
-        if (piece) {
-          piece.style.left = `${e.clientX - piece.offsetWidth / 2}px`;
-          piece.style.top = `${e.clientY - piece.offsetHeight / 2}px`;
+      if (isDragging && currentPiece) {
+        currentPiece.style.left = `${e.clientX - currentPiece.offsetWidth / 2}px`;
+        currentPiece.style.top = `${e.clientY - currentPiece.offsetHeight / 2}px`;
 
-          // サーバーに移動情報を送信
-          socket.emit('piece move', {
-            index: piece.dataset.index,
-            left: parseFloat(piece.style.left),
-            top: parseFloat(piece.style.top),
-          });
-        }
+        // サーバーに移動情報を送信
+        socket.emit('piece move', {
+          index: currentPiece.dataset.index,
+          left: parseFloat(currentPiece.style.left),
+          top: parseFloat(currentPiece.style.top),
+        });
       }
     });
 
