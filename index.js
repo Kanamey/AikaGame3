@@ -18,10 +18,13 @@ const puzzlePositions = Array.from({ length: 16 }, () => ({
   top: Math.floor(Math.random() * 450)
 }));
 
+// 各ユーザーのカーソル位置情報を保持
+let cursors = {};
+
 // サーバーの起動
 http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log('Initial puzzle positions:', puzzlePositions); // サーバー起動後に初期位置を出力
+  console.log('Initial puzzle positions:', puzzlePositions);
 });
 
 // ソケット接続の処理
@@ -50,25 +53,20 @@ io.on('connection', (socket) => {
     const interactionLogHeader = 'Piece,Interaction Duration (ms)\n';
 
     // ファイルにヘッダーを書き込む
-    fs.writeFileSync(path.join(__dirname, socket.gameLogFile), gameLogHeader, (err) => {
-      if (err) throw err;
-    });
-
-    fs.writeFileSync(path.join(__dirname, socket.interactionLogFile), interactionLogHeader, (err) => {
-      if (err) throw err;
-    });
+    fs.writeFileSync(path.join(__dirname, socket.gameLogFile), gameLogHeader);
+    fs.writeFileSync(path.join(__dirname, socket.interactionLogFile), interactionLogHeader);
   });
 
   // ピースの移動イベント
   socket.on('piece move', (data) => {
     puzzlePositions[data.index] = { left: data.left, top: data.top }; // サーバーの位置情報を更新
-    socket.broadcast.emit('piece move', data); // 他のクライアントに更新情報を送信
+    io.emit('piece move', data); // 全クライアントに更新情報を送信
   });
 
   // ピースのスナップイベント
   socket.on('piece snap', (data) => {
     puzzlePositions[data.index] = { left: data.left, top: data.top }; // サーバーの位置情報を更新
-    socket.broadcast.emit('piece snap', data);
+    io.emit('piece snap', data);
   });
 
   // インタラクション時間のログ保存
@@ -80,6 +78,12 @@ io.on('connection', (socket) => {
       if (err) throw err;
       console.log('Interaction data saved.');
     });
+  });
+
+  // カーソル位置の更新
+  socket.on('mouse move', (data) => {
+    cursors[socket.id] = data;
+    io.emit('mouse move', { id: socket.id, position: data });
   });
 
   // ゲーム終了の処理
@@ -96,5 +100,7 @@ io.on('connection', (socket) => {
   // ユーザーが切断されたときの処理
   socket.on('disconnect', () => {
     console.log('A user disconnected');
+    delete cursors[socket.id]; // カーソル情報の削除
+    io.emit('user disconnected', { id: socket.id });
   });
 });
