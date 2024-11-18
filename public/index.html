@@ -155,9 +155,15 @@
 
     // カーソル位置の送信と受信
     document.addEventListener('mousemove', (e) => {
-      const position = { x: e.clientX, y: e.clientY };
+  // パズルコンテナの左上を原点とする座標を取得
+      const rect = puzzleContainer.getBoundingClientRect();
+      const position = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
       socket.emit('mouse move', position);
     });
+
 
     socket.on('mouse move', (data) => {
       let cursor = document.getElementById(`cursor-${data.id}`);
