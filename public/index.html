@@ -92,6 +92,7 @@
       <option value="" disabled selected>参加者記号を選択</option>
       <option value="A">A</option>
       <option value="B">B</option>
+      <option value="watch">watch</option>
     </select>
     <button id="start-button">ゲームスタート</button>
   </div>
@@ -112,16 +113,19 @@
     let canMovePiece = false; // ピースを動かせるかどうかのフラグ
     let isDragging = false; // ドラッグ中かどうかを判定するフラグ
     let currentPiece = null; // 現在ドラッグ中のピース
+    let isPlayer = false; // プレイヤーかどうかのフラグ
 
     // スタートボタンのクリックイベント
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value; // 参加者番号（01-20）
-      const participantLetter = participantLetterSelect.value; // 参加者記号（AまたはB）
+      const participantLetter = participantLetterSelect.value; // 参加者記号（A、B、watch）
 
       if (!participantNumber || !participantLetter) {
         alert("参加者番号と参加者記号を選択してください");
         return;
       }
+
+      isPlayer = (participantLetter === 'A' || participantLetter === 'B'); // AまたはBならプレイヤーとして設定
 
       socket.emit('start game', { participantNumber, participantLetter });
     });
@@ -150,10 +154,12 @@
     });
 
     // カーソル位置の送信と受信
-    document.addEventListener('mousemove', (e) => {
-      const position = { x: e.clientX, y: e.clientY };
-      socket.emit('mouse move', position);
-    });
+    if (isPlayer) {
+      document.addEventListener('mousemove', (e) => {
+        const position = { x: e.clientX, y: e.clientY };
+        socket.emit('mouse move', position);
+      });
+    }
 
     socket.on('mouse move', (data) => {
       let cursor = document.getElementById(`cursor-${data.id}`);
@@ -185,48 +191,68 @@
     // サーバーからピースの移動許可通知を受け取る
     socket.on('allow move', (index) => {
       canMovePiece = true;
+      updateCursorColors();
     });
 
     // サーバーからピースの移動停止通知を受け取る
     socket.on('stop move', (index) => {
       canMovePiece = false;
+      updateCursorColors();
     });
+
+    // カーソルの色を更新する関数
+    function updateCursorColors() {
+      const cursors = document.querySelectorAll('.cursor');
+      cursors.forEach(cursor => {
+        if (canMovePiece) {
+          cursor.classList.add('both-clicked');
+        } else {
+          cursor.classList.remove('both-clicked');
+        }
+      });
+    }
 
     // ドラッグ開始
-    document.addEventListener('mousedown', (e) => {
-      const piece = e.target.closest('.piece');
-      if (piece && canMovePiece) {
-        console.log(`Dragging started on piece index: ${piece.dataset.index}`); // デバッグログ追加
-        isDragging = true;
-        currentPiece = piece;
-        socket.emit('start drag', { index: piece.dataset.index });
-      }
-    });
+    if (isPlayer) {
+      document.addEventListener('mousedown', (e) => {
+        const piece = e.target.closest('.piece');
+        if (piece && canMovePiece) {
+          console.log(`Dragging started on piece index: ${piece.dataset.index}`); // デバッグログ追加
+          isDragging = true;
+          currentPiece = piece;
+          socket.emit('start drag', { index: piece.dataset.index });
+        }
+      });
+    }
 
     // ドラッグ終了
-    document.addEventListener('mouseup', (e) => {
-      if (isDragging && currentPiece) {
-        console.log(`Dragging ended on piece index: ${currentPiece.dataset.index}`); // デバッグログ追加
-        socket.emit('end drag', { index: currentPiece.dataset.index });
-        isDragging = false;
-        currentPiece = null;
-      }
-    });
+    if (isPlayer) {
+      document.addEventListener('mouseup', (e) => {
+        if (isDragging && currentPiece) {
+          console.log(`Dragging ended on piece index: ${currentPiece.dataset.index}`); // デバッグログ追加
+          socket.emit('end drag', { index: currentPiece.dataset.index });
+          isDragging = false;
+          currentPiece = null;
+        }
+      });
+    }
 
     // ピースの移動
-    document.addEventListener('mousemove', (e) => {
-      if (isDragging && currentPiece) {
-        currentPiece.style.left = `${e.clientX - currentPiece.offsetWidth / 2}px`;
-        currentPiece.style.top = `${e.clientY - currentPiece.offsetHeight / 2}px`;
+    if (isPlayer) {
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging && currentPiece) {
+          currentPiece.style.left = `${e.clientX - currentPiece.offsetWidth / 2}px`;
+          currentPiece.style.top = `${e.clientY - currentPiece.offsetHeight / 2}px`;
 
-        // サーバーに移動情報を送信
-        socket.emit('piece move', {
-          index: currentPiece.dataset.index,
-          left: parseFloat(currentPiece.style.left),
-          top: parseFloat(currentPiece.style.top),
-        });
-      }
-    });
+          // サーバーに移動情報を送信
+          socket.emit('piece move', {
+            index: currentPiece.dataset.index,
+            left: parseFloat(currentPiece.style.left),
+            top: parseFloat(currentPiece.style.top),
+          });
+        }
+      });
+    }
 
     // カーソル位置がどのピースに重なっているかを確認
     function getOverlappingPiece(x, y) {
