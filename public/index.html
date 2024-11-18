@@ -155,7 +155,7 @@
 
     // カーソル位置の送信と受信
     document.addEventListener('mousemove', (e) => {
-  // パズルコンテナの左上を原点とする座標を取得
+      // パズルコンテナの左上を基準とする座標を取得
       const rect = puzzleContainer.getBoundingClientRect();
       const position = {
         x: e.clientX - rect.left,
@@ -173,8 +173,11 @@
         cursor.id = `cursor-${data.id}`;
         document.body.appendChild(cursor);
       }
-      cursor.style.left = `${data.position.x}px`;
-      cursor.style.top = `${data.position.y}px`;
+  
+      // パズルコンテナの左上を基準にカーソル位置を調整
+      const rect = puzzleContainer.getBoundingClientRect();
+      cursor.style.left = `${data.position.x + rect.left - cursor.offsetWidth / 2}px`;
+      cursor.style.top = `${data.position.y + rect.top - cursor.offsetHeight / 2}px`;
 
       // カーソルがピースに重なっているかを確認
       const overlappingPiece = getOverlappingPiece(data.position.x, data.position.y);
