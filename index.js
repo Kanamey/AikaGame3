@@ -37,7 +37,11 @@ io.on('connection', (socket) => {
   // スタートボタンを押されたときの処理
   socket.on('start game', (data) => {
     console.log(`Game started by: ${data.participantNumber}${data.participantLetter}`);
-    io.emit('game started');
+    if (data.participantLetter === 'watch') {
+      socket.emit('watch only');
+    } else {
+      io.emit('game started');
+    }
   });
 
   // カーソル位置の更新
