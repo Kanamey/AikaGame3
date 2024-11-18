@@ -154,12 +154,10 @@
     });
 
     // カーソル位置の送信と受信
-    if (isPlayer) {
-      document.addEventListener('mousemove', (e) => {
-        const position = { x: e.clientX, y: e.clientY };
-        socket.emit('mouse move', position);
-      });
-    }
+    document.addEventListener('mousemove', (e) => {
+      const position = { x: e.clientX, y: e.clientY };
+      socket.emit('mouse move', position);
+    });
 
     socket.on('mouse move', (data) => {
       let cursor = document.getElementById(`cursor-${data.id}`);
