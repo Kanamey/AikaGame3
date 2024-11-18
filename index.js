@@ -83,12 +83,10 @@ io.on('connection', (socket) => {
 
   // ピースの移動イベント
   socket.on('piece move', (data) => {
-    // サーバーの位置情報を更新（フレーム基準の位置）
-    puzzlePositions[data.index] = { left: data.left, top: data.top };
+    puzzlePositions[data.index] = { left: data.left, top: data.top }; // サーバーの位置情報を更新
     console.log(`Piece ${data.index} moved to: left=${data.left}, top=${data.top}`);
     io.emit('piece move', data); // 全クライアントに更新情報を送信
   });
-  
 
   // ユーザーが切断されたときの処理
   socket.on('disconnect', () => {
