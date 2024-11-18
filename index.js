@@ -44,6 +44,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  
   // カーソル位置の更新
   socket.on('mouse move', (data) => {
     if (data.participantLetter !== 'watch') { // watchのみのユーザーは送信しない
