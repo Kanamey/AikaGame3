@@ -46,8 +46,10 @@ io.on('connection', (socket) => {
 
   // カーソル位置の更新
   socket.on('mouse move', (data) => {
-    cursors[socket.id] = data;
-    io.emit('mouse move', { id: socket.id, position: data });
+    if (data.participantLetter !== 'watch') { // watchのみのユーザーは送信しない
+      cursors[socket.id] = data;
+      io.emit('mouse move', { id: socket.id, position: data });
+    }
   });
 
   // ピースのドラッグ開始
