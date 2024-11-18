@@ -61,12 +61,13 @@ io.on('connection', (socket) => {
 
     console.log(`Piece ${data.index} is being dragged by: ${[...clickStates[data.index]].join(', ')}`);
 
-    // 2人のユーザーが同じピースをクリックしている場合に移動を許可
-    if (clickStates[data.index].size >= 2) {
+    // 2人のユーザーが同時にクリックし続けている状態であれば移動を許可
+    if (clickStates[data.index].size === 2) {
       console.log(`Piece ${data.index} move allowed`);
       io.emit('allow move', data.index);
     }
   });
+
 
   // ピースのドラッグ終了
   socket.on('end drag', (data) => {
@@ -74,7 +75,8 @@ io.on('connection', (socket) => {
       clickStates[data.index].delete(socket.id);
       console.log(`Piece ${data.index} is no longer dragged by: ${socket.id}`);
 
-      if (clickStates[data.index].size < 2) {
+      // どちらか一方のユーザーがクリックをやめたらピースの移動を停止
+      if (clickStates[data.index].size < 1) {
         console.log(`Piece ${data.index} move stopped`);
         io.emit('stop move', data.index);
       }
