@@ -164,36 +164,57 @@
       socket.emit('mouse move', position);
     });
 
-
-    socket.on('mouse move', (data) => {
-      let cursor = document.getElementById(`cursor-${data.id}`);
-      if (!cursor) {
-        cursor = document.createElement('div');
-        cursor.classList.add('cursor');
-        cursor.id = `cursor-${data.id}`;
-        document.body.appendChild(cursor);
-      }
   
-      // パズルコンテナの左上を基準にカーソル位置を調整
-      const rect = puzzleContainer.getBoundingClientRect();
-      cursor.style.left = `${data.position.x + rect.left - cursor.offsetWidth / 2}px`;
-      cursor.style.top = `${data.position.y + rect.top - cursor.offsetHeight / 2}px`;
+  
+    socket.on('mouse move', (data) => {
+  let cursor = document.getElementById(`cursor-${data.id}`);
+  if (!cursor) {
+    cursor = document.createElement('div');
+    cursor.classList.add('cursor');
+    cursor.id = `cursor-${data.id}`;
+    document.body.appendChild(cursor);
+  }
 
-      // カーソルがピースに重なっているかを確認
-      const overlappingPiece = getOverlappingPiece(data.position.x, data.position.y);
-      if (overlappingPiece) {
-        cursor.classList.add('shared');
-      } else {
-        cursor.classList.remove('shared');
-      }
+  // パズルコンテナの左上を基準にカーソル位置を調整
+  const rect = puzzleContainer.getBoundingClientRect();
+  cursor.style.left = `${data.position.x + rect.left - cursor.offsetWidth / 2}px`;
+  cursor.style.top = `${data.position.y + rect.top - cursor.offsetHeight / 2}px`;
 
-      // 両方のユーザーが同じピースをクリックしているか確認
-      if (canMovePiece) {
-        cursor.classList.add('both-clicked');
-      } else {
-        cursor.classList.remove('both-clicked');
+  // カーソルがピースに重なっているかを確認
+  const overlappingPiece = getOverlappingPiece(data.position.x, data.position.y);
+  if (overlappingPiece) {
+    cursor.classList.add('shared');
+  } else {
+    cursor.classList.remove('shared');
+  }
+
+  // 他のユーザーのカーソル位置と同じピースに重なっているか確認
+  let isSharedWithOther = false;
+  for (let otherId in cursors) {
+    if (otherId !== data.id) {
+      const otherCursor = cursors[otherId];
+      if (otherCursor.pieceIndex === overlappingPiece?.dataset.index) {
+        isSharedWithOther = true;
+        break;
       }
-    });
+    }
+  }
+
+  // 同じピースに重なっている場合はカーソルを青色に変更
+  if (isSharedWithOther) {
+    cursor.classList.add('shared');
+  } else {
+    cursor.classList.remove('shared');
+  }
+
+  // 両方のユーザーが同じピースをクリックしているか確認
+  if (canMovePiece && clickStates[data.index]?.size >= 2) {
+    cursor.classList.add('both-clicked');
+  } else {
+    cursor.classList.remove('both-clicked');
+  }
+});
+
 
 
   // サーバーからピースの移動許可通知を受け取る
@@ -215,7 +236,7 @@
     }
   });
 
-  
+
     // カーソルの色を更新する関数
     function updateCursorColors() {
       const cursors = document.querySelectorAll('.cursor');
