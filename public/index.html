@@ -195,18 +195,27 @@
       }
     });
 
-    // サーバーからピースの移動許可通知を受け取る
-    socket.on('allow move', (index) => {
-      canMovePiece = true;
-      updateCursorColors();
-    });
 
-    // サーバーからピースの移動停止通知を受け取る
-    socket.on('stop move', (index) => {
-      canMovePiece = false;
-      updateCursorColors();
-    });
+  // サーバーからピースの移動許可通知を受け取る
+  socket.on('allow move', (index) => {
+    // 移動が許可されたピースの情報を保持
+    if (!canMovePiece) {
+      canMovePiece = new Set();
+    }
+    canMovePiece.add(index);
+    updateCursorColors();
+  });
 
+  // サーバーからピースの移動停止通知を受け取る
+  socket.on('stop move', (index) => {
+    // 指定されたピースの移動を停止
+    if (canMovePiece && canMovePiece.has(index)) {
+      canMovePiece.delete(index);
+      updateCursorColors();
+    }
+  });
+
+  
     // カーソルの色を更新する関数
     function updateCursorColors() {
       const cursors = document.querySelectorAll('.cursor');
@@ -219,18 +228,17 @@
       });
     }
 
-    // ドラッグ開始
     if (isPlayer) {
-      document.addEventListener('mousedown', (e) => {
-        const piece = e.target.closest('.piece');
-        if (piece && canMovePiece) {
-          console.log(`Dragging started on piece index: ${piece.dataset.index}`); // デバッグログ追加
-          isDragging = true;
-          currentPiece = piece;
-          socket.emit('start drag', { index: piece.dataset.index });
-        }
-      });
+  document.addEventListener('mousedown', (e) => {
+    const piece = e.target.closest('.piece');
+    if (piece) {
+      console.log(`Dragging started on piece index: ${piece.dataset.index}`); // デバッグログ追加
+      socket.emit('start drag', { index: piece.dataset.index });
+      isDragging = true;
+      currentPiece = piece;
     }
+  });
+}
 
     // ドラッグ終了
     if (isPlayer) {
@@ -244,22 +252,25 @@
       });
     }
 
-    // ピースの移動
+
+
     if (isPlayer) {
       document.addEventListener('mousemove', (e) => {
-        if (isDragging && currentPiece) {
-          currentPiece.style.left = `${e.clientX - currentPiece.offsetWidth / 2}px`;
-          currentPiece.style.top = `${e.clientY - currentPiece.offsetHeight / 2}px`;
+      if (isDragging && currentPiece && canMovePiece) {
+        const rect = puzzleContainer.getBoundingClientRect();
+        currentPiece.style.left = `${e.clientX - rect.left - currentPiece.offsetWidth / 2}px`;
+        currentPiece.style.top = `${e.clientY - rect.top - currentPiece.offsetHeight / 2}px`;
 
-          // サーバーに移動情報を送信
-          socket.emit('piece move', {
-            index: currentPiece.dataset.index,
-            left: parseFloat(currentPiece.style.left),
-            top: parseFloat(currentPiece.style.top),
-          });
-        }
-      });
-    }
+        // サーバーに移動情報を送信
+        socket.emit('piece move', {
+          index: currentPiece.dataset.index,
+          left: parseFloat(currentPiece.style.left),
+          top: parseFloat(currentPiece.style.top),
+        });
+      }
+    });
+  }
+
 
     // カーソル位置がどのピースに重なっているかを確認
     function getOverlappingPiece(x, y) {
