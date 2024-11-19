@@ -1,126 +1,228 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle Game</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        #puzzle-container {
-            width: 600px;
-            height: 600px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            border: 2px solid #000;
-            display: none; /* ゲーム開始前は非表示 */
-        }
-
-        .piece {
-            width: 150px;
-            height: 150px;
-            position: absolute;
-            cursor: pointer;
-            border: 1px solid #333;
-        }
-
-        .cursor {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: red;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .shared {
-            background-color: blue;
-        }
-
-        .both-clicked {
-            background-color: green;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>二人用パズルゲーム</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #puzzle-container {
+      width: 600px;
+      height: 600px;
+      position: absolute;
+      top: 0; /* 画面の左上に配置 */
+      left: 0; /* 画面の左上に配置 */
+      border: 2px solid #000;
+      display: none; /* ゲーム開始前は非表示 */
+    }
+    .piece {
+      width: 150px;
+      height: 150px;
+      background-image: url('sample.jpg');
+      background-size: 600px 600px;
+      position: absolute;
+      cursor: pointer;
+    }
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    #start-button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #completion-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 24px;
+      display: none; /* パズル完成時に表示されるメッセージ。初期状態では非表示 */
+    }
+  </style>
 </head>
 <body>
-    <div id="puzzle-container"></div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const puzzleContainer = document.getElementById('puzzle-container');
+  <div id="controls">
+    <select id="participant-number">
+      <option value="" disabled selected>参加者番号を選択</option>
+      <!-- 01から20までの参加者番号 -->
+      <option value="01">01</option>
+      <option value="02">02</option>
+      <option value="03">03</option>
+      <option value="04">04</option>
+      <option value="05">05</option>
+      <option value="06">06</option>
+      <option value="07">07</option>
+      <option value="08">08</option>
+      <option value="09">09</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="14">14</option>
+      <option value="15">15</option>
+      <option value="16">16</option>
+      <option value="17">17</option>
+      <option value="18">18</option>
+      <option value="19">19</option>
+      <option value="20">20</option>
+    </select>
+    <select id="participant-letter">
+      <option value="" disabled selected>参加者記号を選択</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="watch">watch</option>
+    </select>
+    <button id="start-button">ゲームスタート</button>
+  </div>
+  <div id="puzzle-container"></div>
+  <div id="completion-message">パズル完成！お疲れ様でした！</div>
 
-        let isDragging = false;
-        let currentPiece = null;
-        let canMovePiece = false;
+  <!-- Socket.IOのクライアントライブラリ -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const puzzleContainer = document.getElementById('puzzle-container');
+    const startButton = document.getElementById('start-button');
+    const completionMessage = document.getElementById('completion-message');
+    const participantNumberSelect = document.getElementById('participant-number');
+    const participantLetterSelect = document.getElementById('participant-letter');
+    const gridSize = 150;
+    const snapTolerance = 20;
+    let canMovePiece = false; // ピースを動かせるかどうかのフラグ
+    let isDragging = false; // ドラッグ中かどうかを判定するフラグ
+    let currentPiece = null; // 現在ドラッグ中のピース
+    let isPlayer = false; // プレイヤーかどうかのフラグ
+    let interactionStartTime = null; // ピースのインタラクション開始時間
+    let moveStartTime = null; // ピースの移動開始時間
+    let totalMoveTime = 0; // パズルピースが実際に動いた時間の合計
 
-        // サーバーからピースの移動許可通知を受け取る
-        socket.on('allow move', (index) => {
-            canMovePiece = true;
-            updateCursorColors();
-        });
+    // スタートボタンのクリックイベント
+    startButton.addEventListener('click', () => {
+      const participantNumber = participantNumberSelect.value; // 参加者番号（01-20）
+      const participantLetter = participantLetterSelect.value; // 参加者記号（A、B、watch）
 
-        // サーバーからピースの移動停止通知を受け取る
-        socket.on('stop move', (index) => {
-            canMovePiece = false;
-            updateCursorColors();
-        });
+      if (!participantNumber || !participantLetter) {
+        alert("参加者番号と参加者記号を選択してください");
+        return;
+      }
 
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging && currentPiece && canMovePiece) {
-                const rect = puzzleContainer.getBoundingClientRect();
-                currentPiece.style.left = `${e.clientX - rect.left - currentPiece.offsetWidth / 2}px`;
-                currentPiece.style.top = `${e.clientY - rect.top - currentPiece.offsetHeight / 2}px`;
+      isPlayer = (participantLetter === 'A' || participantLetter === 'B'); // AまたはBならプレイヤーとして設定
 
-                // サーバーに移動情報を送信
-                socket.emit('piece move', {
-                    index: currentPiece.dataset.index,
-                    left: parseFloat(currentPiece.style.left),
-                    top: parseFloat(currentPiece.style.top),
-                });
+      socket.emit('start game', { participantNumber, participantLetter });
+    });
+
+    // サーバーからゲーム開始の通知を受け取る
+    socket.on('game started', () => {
+      startButton.style.display = 'none';
+      participantNumberSelect.style.display = 'none';
+      participantLetterSelect.style.display = 'none';
+      puzzleContainer.style.display = 'block';
+    });
+
+    // 初期位置情報の受信とピースの配置
+    socket.on('initialize puzzle', (positions) => {
+      for (let i = 0; i < 16; i++) {
+        const piece = document.createElement('div');
+        piece.classList.add('piece');
+        piece.style.backgroundPosition = `-${(i % 4) * gridSize}px -${Math.floor(i / 4) * gridSize}px`;
+        piece.dataset.index = i;
+
+        piece.style.left = `${positions[i].left}px`;
+        piece.style.top = `${positions[i].top}px`;
+
+        puzzleContainer.appendChild(piece);
+
+        let offsetX, offsetY;
+        piece.addEventListener('mousedown', (e) => {
+          if (!isPlayer) return;
+
+          offsetX = e.clientX - piece.offsetLeft;
+          offsetY = e.clientY - piece.offsetTop;
+
+          isDragging = true;
+          currentPiece = piece;
+          interactionStartTime = Date.now(); // インタラクション開始時間を記録
+          moveStartTime = Date.now(); // ピースの移動開始時間を記録
+
+          const onMouseMove = (event) => {
+            piece.style.left = `${event.clientX - offsetX}px`;
+            piece.style.top = `${event.clientY - offsetY}px`;
+
+            socket.emit('piece move', { index: i, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
+          };
+
+          const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            isDragging = false;
+            currentPiece = null;
+
+            // インタラクション時間の記録
+            if (interactionStartTime !== null) {
+              const interactionDuration = Date.now() - interactionStartTime;
+              socket.emit('log interaction', { index: i, duration: interactionDuration });
+              interactionStartTime = null;
             }
 
-            // カーソル位置をサーバーに送信
-            const rect = puzzleContainer.getBoundingClientRect();
-            const position = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-            socket.emit('mouse move', position);
-        });
-
-        document.addEventListener('mousedown', (e) => {
-            const piece = e.target.closest('.piece');
-            if (piece) {
-                console.log(`Dragging started on piece index: ${piece.dataset.index}`);
-                socket.emit('start drag', { index: piece.dataset.index });
-                isDragging = true;
-                currentPiece = piece;
-            }
-        });
-
-        document.addEventListener('mouseup', () => {
-            if (isDragging && currentPiece) {
-                console.log(`Dragging ended on piece index: ${currentPiece.dataset.index}`);
-                socket.emit('end drag', { index: currentPiece.dataset.index });
-                isDragging = false;
-                currentPiece = null;
-            }
-        });
-
-        socket.on('mouse move', (data) => {
-            let cursor = document.getElementById(`cursor-${data.id}`);
-            if (!cursor) {
-                cursor = document.createElement('div');
-                cursor.classList.add('cursor');
-                cursor.id = `cursor-${data.id}`;
-                document.body.appendChild(cursor);
+            // ピースの移動時間の記録
+            if (moveStartTime !== null) {
+              totalMoveTime += Date.now() - moveStartTime;
+              moveStartTime = null;
             }
 
-            const rect = puzzleContainer.getBoundingClientRect();
-            cursor.style.left = `${data.position.x + rect.left - cursor.offsetWidth / 2}px`;
-            cursor.style.top = `${data.position.y + rect.top - cursor.offsetHeight / 2}px`;
+            const correctX = (i % 4) * gridSize;
+            const correctY = Math.floor(i / 4) * gridSize;
+            const currentX = parseFloat(piece.style.left);
+            const currentY = parseFloat(piece.style.top);
+
+            // ピースが正しい位置にあるかを確認し、スナップさせる
+            if (Math.abs(currentX - correctX) < snapTolerance && Math.abs(currentY - correctY) < snapTolerance) {
+              piece.style.left = `${correctX}px`;
+              piece.style.top = `${correctY}px`;
+              piece.style.pointerEvents = 'none'; // ピースが正しい位置に配置された場合、もう動かせないようにする
+              piece.dataset.snapped = "true";
+              socket.emit('piece snap', { index: i, left: correctX, top: correctY });
+            }
+
+            checkCompletion(); // パズル完成の確認
+          };
+
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
         });
-    </script>
+      }
+    });
+
+    // 他のユーザーがピースを動かした場合の処理
+    socket.on('piece move', (data) => {
+      const targetPiece = document.querySelector(`.piece[data-index="${data.index}"]`);
+      if (targetPiece) {
+        targetPiece.style.left = `${data.left}px`;
+        targetPiece.style.top = `${data.top}px`;
+      }
+    });
+
+    // すべてのピースが正しい位置に配置されたかを確認
+    function checkCompletion() {
+      const allSnapped = Array.from(document.querySelectorAll('.piece')).every(piece => piece.dataset.snapped === "true");
+      if (allSnapped) {
+        const gameDuration = Date.now() - gameStartTime;
+        socket.emit('game finished', { duration: gameDuration, totalMoveTime });
+        completionMessage.style.display = 'block';
+        setTimeout(() => {
+          completionMessage.style.display = 'none';
+        }, 5000);
+      }
+    }
+  </script>
 </body>
 </html>
