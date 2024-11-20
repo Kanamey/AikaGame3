@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
     if (data.participantLetter === 'watch') {
       socket.emit('watch only');
     } else {
-      io.emit('game started');
+      socket.emit('game started for participant'); // ゲームを開始するクライアントにのみ通知
     }
 
     // ゲームログファイルの作成
