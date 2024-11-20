@@ -49,6 +49,7 @@ io.on('connection', (socket) => {
 
   // ピースの移動イベント
   socket.on('piece move', (data) => {
+    if (puzzlePositions[data.index].snapped) return; // すでにスナップされたピースは動かさない
     puzzlePositions[data.index] = { left: data.left, top: data.top };
     socket.broadcast.emit('piece move', data);
   });
@@ -58,7 +59,7 @@ io.on('connection', (socket) => {
     // サーバー側でピースの位置を確定
     const correctX = (data.index % 4) * 150;
     const correctY = Math.floor(data.index / 4) * 150;
-    puzzlePositions[data.index] = { left: correctX, top: correctY };
+    puzzlePositions[data.index] = { left: correctX, top: correctY, snapped: true };
 
     // 全てのクライアントにピースのスナップを通知
     io.emit('piece snap', { index: data.index, left: correctX, top: correctY });
