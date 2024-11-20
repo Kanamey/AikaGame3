@@ -12,7 +12,7 @@
       top: 0;
       left: 0;
       border: 2px solid #000;
-      display: none;
+      display: none; /* ゲーム開始前は非表示 */
     }
     .piece {
       width: 150px;
@@ -44,7 +44,7 @@
       background: rgba(0, 0, 0, 0.7);
       color: #fff;
       font-size: 24px;
-      display: none;
+      display: none; /* パズル完成時に表示されるメッセージ。初期状態では非表示 */
     }
   </style>
 </head>
@@ -68,6 +68,7 @@
   <div id="puzzle-container"></div>
   <div id="completion-message">パズル完成！お疲れ様でした！</div>
 
+  <!-- Socket.IOのクライアントライブラリ -->
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
@@ -79,6 +80,7 @@
     const gridSize = 150;
     const snapTolerance = 20;
     let isPlayer = false;
+    let gameStarted = false; // 各参加者がゲームをスタートしたかどうかを記録
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -90,14 +92,18 @@
       }
 
       isPlayer = (participantLetter === 'A' || participantLetter === 'B');
+      gameStarted = true; // スタートボタンを押したことを記録
       socket.emit('start game', { participantNumber, participantLetter });
     });
 
-    socket.on('game started', () => {
-      startButton.style.display = 'none';
-      participantNumberSelect.style.display = 'none';
-      participantLetterSelect.style.display = 'none';
-      puzzleContainer.style.display = 'block';
+    // 自分がスタートボタンを押した場合にのみゲームを開始する
+    socket.on('game started for participant', () => {
+      if (gameStarted) {
+        startButton.style.display = 'none';
+        participantNumberSelect.style.display = 'none';
+        participantLetterSelect.style.display = 'none';
+        puzzleContainer.style.display = 'block';
+      }
     });
 
     socket.on('initialize puzzle', (positions) => {
