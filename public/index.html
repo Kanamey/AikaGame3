@@ -115,6 +115,11 @@
         piece.style.left = `${positions[i].left}px`;
         piece.style.top = `${positions[i].top}px`;
 
+        if (positions[i].snapped) {
+          piece.dataset.snapped = "true";
+          piece.style.pointerEvents = 'none';
+        }
+
         puzzleContainer.appendChild(piece);
 
         let offsetX, offsetY;
