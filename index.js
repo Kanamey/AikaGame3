@@ -15,7 +15,8 @@ app.use(express.static('public'));
 // 初期パズル位置情報を保持
 const puzzlePositions = Array.from({ length: 16 }, () => ({
   left: Math.floor(Math.random() * 450),
-  top: Math.floor(Math.random() * 450)
+  top: Math.floor(Math.random() * 450),
+  snapped: false
 }));
 
 // サーバーの起動
@@ -49,8 +50,16 @@ io.on('connection', (socket) => {
 
   // ピースの移動イベント
   socket.on('piece move', (data) => {
-    if (puzzlePositions[data.index].snapped) return; // すでにスナップされたピースは動かさない
-    puzzlePositions[data.index] = { left: data.left, top: data.top };
+    if (puzzlePositions[data.index].snapped) {
+      // すでにスナップされたピースは正しい位置に戻す
+      socket.emit('piece snap', {
+        index: data.index,
+        left: puzzlePositions[data.index].left,
+        top: puzzlePositions[data.index].top
+      });
+      return;
+    }
+    puzzlePositions[data.index] = { left: data.left, top: data.top, snapped: false };
     socket.broadcast.emit('piece move', data);
   });
 
