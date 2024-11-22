@@ -80,7 +80,7 @@
     const gridSize = 150;
     const snapTolerance = 20;
     let isPlayer = false;
-    let gameStarted = false; // 各参加者がゲームをスタートしたかどうかを記録
+    let gameStarted = false;
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -92,11 +92,10 @@
       }
 
       isPlayer = (participantLetter === 'A' || participantLetter === 'B');
-      gameStarted = true; // スタートボタンを押したことを記録
+      gameStarted = true;
       socket.emit('start game', { participantNumber, participantLetter });
     });
 
-    // 自分がスタートボタンを押した場合にのみゲームを開始する
     socket.on('game started for participant', () => {
       if (gameStarted) {
         startButton.style.display = 'none';
@@ -150,6 +149,11 @@
               piece.style.pointerEvents = 'none';
               piece.dataset.snapped = "true";
               socket.emit('piece snap', { index: i, left: correctX, top: correctY });
+            } else {
+              // すでにスナップされていた場合は正しい位置に戻す
+              if (piece.dataset.snapped === "true") {
+                socket.emit('piece snap', { index: i, left: correctX, top: correctY });
+              }
             }
 
             checkCompletion();
