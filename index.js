@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     currentlyClicked[data.index].push(socket.id);
 
     if (currentlyClicked[data.index].length === 2) {
-      io.emit('both clicked');
+      io.emit('both clicked', { index: data.index });
     }
   });
 
@@ -67,24 +67,26 @@ io.on('connection', (socket) => {
     if (currentlyClicked[data.index]) {
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
       if (currentlyClicked[data.index].length < 2) {
-        io.emit('not both clicked');
+        io.emit('not both clicked', { index: data.index });
       }
     }
   });
 
   // ピースの移動イベント
   socket.on('piece move', (data) => {
-    if (puzzlePositions[data.index].snapped) {
-      // すでにスナップされたピースは正しい位置に戻す
-      socket.emit('piece snap', {
-        index: data.index,
-        left: puzzlePositions[data.index].left,
-        top: puzzlePositions[data.index].top
-      });
-      return;
+    if (currentlyClicked[data.index] && currentlyClicked[data.index].length === 2) {
+      if (puzzlePositions[data.index].snapped) {
+        // すでにスナップされたピースは正しい位置に戻す
+        socket.emit('piece snap', {
+          index: data.index,
+          left: puzzlePositions[data.index].left,
+          top: puzzlePositions[data.index].top
+        });
+        return;
+      }
+      puzzlePositions[data.index] = { left: data.left, top: data.top, snapped: false };
+      socket.broadcast.emit('piece move', data);
     }
-    puzzlePositions[data.index] = { left: data.left, top: data.top, snapped: false };
-    socket.broadcast.emit('piece move', data);
   });
 
   // ピースが正しい位置にスナップされた場合のイベント
@@ -126,7 +128,7 @@ io.on('connection', (socket) => {
     for (let index in currentlyClicked) {
       currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
       if (currentlyClicked[index].length < 2) {
-        io.emit('not both clicked');
+        io.emit('not both clicked', { index: parseInt(index) });
       }
     }
   });
