@@ -19,6 +19,8 @@ const puzzlePositions = Array.from({ length: 16 }, () => ({
   snapped: false
 }));
 
+let currentlyClicked = {}; // 各ピースのクリック状態を保持
+
 // サーバーの起動
 http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
@@ -46,6 +48,28 @@ io.on('connection', (socket) => {
     fs.writeFileSync(socket.gameLogFile, 'Event,Duration (ms)\n', (err) => {
       if (err) throw err;
     });
+  });
+
+  // ピースがクリックされたときのイベント
+  socket.on('piece clicked', (data) => {
+    if (!currentlyClicked[data.index]) {
+      currentlyClicked[data.index] = [];
+    }
+    currentlyClicked[data.index].push(socket.id);
+
+    if (currentlyClicked[data.index].length === 2) {
+      io.emit('both clicked');
+    }
+  });
+
+  // ピースが離されたときのイベント
+  socket.on('piece released', (data) => {
+    if (currentlyClicked[data.index]) {
+      currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
+      if (currentlyClicked[data.index].length < 2) {
+        io.emit('not both clicked');
+      }
+    }
   });
 
   // ピースの移動イベント
@@ -98,5 +122,12 @@ io.on('connection', (socket) => {
   // ユーザーが切断された場合の処理
   socket.on('disconnect', () => {
     console.log('A user disconnected');
+    // クリック状態の管理から切断したユーザーを削除
+    for (let index in currentlyClicked) {
+      currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
+      if (currentlyClicked[index].length < 2) {
+        io.emit('not both clicked');
+      }
+    }
   });
 });
