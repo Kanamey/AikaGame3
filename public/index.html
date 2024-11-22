@@ -46,6 +46,16 @@
       font-size: 24px;
       display: none; /* パズル完成時に表示されるメッセージ。初期状態では非表示 */
     }
+    #same-click-indicator {
+      width: 20px;
+      height: 20px;
+      background: red;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border-radius: 50%;
+      display: none; /* 二人が同じピースをクリックしているときに表示 */
+    }
   </style>
 </head>
 <body>
@@ -67,6 +77,7 @@
   </div>
   <div id="puzzle-container"></div>
   <div id="completion-message">パズル完成！お疲れ様でした！</div>
+  <div id="same-click-indicator"></div>
 
   <!-- Socket.IOのクライアントライブラリ -->
   <script src="/socket.io/socket.io.js"></script>
@@ -77,10 +88,12 @@
     const completionMessage = document.getElementById('completion-message');
     const participantNumberSelect = document.getElementById('participant-number');
     const participantLetterSelect = document.getElementById('participant-letter');
+    const sameClickIndicator = document.getElementById('same-click-indicator');
     const gridSize = 150;
     const snapTolerance = 20;
     let isPlayer = false;
     let gameStarted = false;
+    let currentPieceIndex = null;
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -127,16 +140,21 @@
 
           offsetX = e.clientX - piece.offsetLeft;
           offsetY = e.clientY - piece.offsetTop;
+          currentPieceIndex = parseInt(piece.dataset.index);
+
+          socket.emit('piece clicked', { index: currentPieceIndex });
 
           const onMouseMove = (event) => {
             piece.style.left = `${event.clientX - offsetX}px`;
             piece.style.top = `${event.clientY - offsetY}px`;
-            socket.emit('piece move', { index: i, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
+            socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
           };
 
           const onMouseUp = () => {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
+            socket.emit('piece released', { index: currentPieceIndex });
+            currentPieceIndex = null;
 
             const correctX = (i % 4) * gridSize;
             const correctY = Math.floor(i / 4) * gridSize;
@@ -189,6 +207,14 @@
         piece.style.pointerEvents = 'none';
         piece.dataset.snapped = "true";
       }
+    });
+
+    socket.on('both clicked', () => {
+      sameClickIndicator.style.display = 'block';
+    });
+
+    socket.on('not both clicked', () => {
+      sameClickIndicator.style.display = 'none';
     });
 
     function checkCompletion() {
