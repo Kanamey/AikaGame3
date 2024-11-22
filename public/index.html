@@ -94,6 +94,7 @@
     let isPlayer = false;
     let gameStarted = false;
     let currentPieceIndex = null;
+    let canMovePiece = false;
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -136,7 +137,7 @@
 
         let offsetX, offsetY;
         piece.addEventListener('mousedown', (e) => {
-          if (!isPlayer || piece.dataset.snapped === "true") return;
+          if (!isPlayer || piece.dataset.snapped === "true" || !canMovePiece) return;
 
           offsetX = e.clientX - piece.offsetLeft;
           offsetY = e.clientY - piece.offsetTop;
@@ -211,10 +212,12 @@
 
     socket.on('both clicked', () => {
       sameClickIndicator.style.display = 'block';
+      canMovePiece = true; // 赤丸が表示されている間だけピースを動かせるようにする
     });
 
     socket.on('not both clicked', () => {
       sameClickIndicator.style.display = 'none';
+      canMovePiece = false; // 赤丸が消えたらピースを動かせない
     });
 
     function checkCompletion() {
