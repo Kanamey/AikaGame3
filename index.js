@@ -1,11 +1,9 @@
-// 二人同時クリックのときだけ動かせる
 // 必要なモジュールのインポート
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const fs = require('fs');
-const path = require('path');
 
 // ポート設定
 const PORT = process.env.PORT || 10000;
@@ -25,7 +23,6 @@ let currentlyClicked = {}; // 各ピースのクリック状態を保持
 // サーバーの起動
 http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log('Initial puzzle positions:', puzzlePositions);
 });
 
 // ソケット接続の処理
@@ -41,7 +38,7 @@ io.on('connection', (socket) => {
     if (data.participantLetter === 'watch') {
       socket.emit('watch only');
     } else {
-      socket.emit('game started for participant'); // ゲームを開始するクライアントにのみ通知
+      socket.emit('game started for participant');
     }
 
     // ゲームログファイルの作成
@@ -56,10 +53,12 @@ io.on('connection', (socket) => {
     if (!currentlyClicked[data.index]) {
       currentlyClicked[data.index] = [];
     }
-    currentlyClicked[data.index].push(socket.id);
+    if (!currentlyClicked[data.index].includes(socket.id)) {
+      currentlyClicked[data.index].push(socket.id);
+    }
 
     if (currentlyClicked[data.index].length === 2) {
-      io.emit('both clicked', { index: data.index });
+      io.emit('both clicked'); // 全クライアントに両方がクリックしていることを通知
     }
   });
 
@@ -68,7 +67,7 @@ io.on('connection', (socket) => {
     if (currentlyClicked[data.index]) {
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
       if (currentlyClicked[data.index].length < 2) {
-        io.emit('not both clicked', { index: data.index });
+        io.emit('not both clicked');
       }
     }
   });
@@ -76,15 +75,6 @@ io.on('connection', (socket) => {
   // ピースの移動イベント
   socket.on('piece move', (data) => {
     if (currentlyClicked[data.index] && currentlyClicked[data.index].length === 2) {
-      if (puzzlePositions[data.index].snapped) {
-        // すでにスナップされたピースは正しい位置に戻す
-        socket.emit('piece snap', {
-          index: data.index,
-          left: puzzlePositions[data.index].left,
-          top: puzzlePositions[data.index].top
-        });
-        return;
-      }
       puzzlePositions[data.index] = { left: data.left, top: data.top, snapped: false };
       socket.broadcast.emit('piece move', data);
     }
@@ -92,7 +82,6 @@ io.on('connection', (socket) => {
 
   // ピースが正しい位置にスナップされた場合のイベント
   socket.on('piece snap', (data) => {
-    // サーバー側でピースの位置を確定
     const correctX = (data.index % 4) * 150;
     const correctY = Math.floor(data.index / 4) * 150;
     puzzlePositions[data.index] = { left: correctX, top: correctY, snapped: true };
@@ -125,11 +114,10 @@ io.on('connection', (socket) => {
   // ユーザーが切断された場合の処理
   socket.on('disconnect', () => {
     console.log('A user disconnected');
-    // クリック状態の管理から切断したユーザーを削除
     for (let index in currentlyClicked) {
       currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
       if (currentlyClicked[index].length < 2) {
-        io.emit('not both clicked', { index: parseInt(index) });
+        io.emit('not both clicked');
       }
     }
   });
