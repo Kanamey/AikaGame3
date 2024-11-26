@@ -67,6 +67,7 @@ io.on('connection', (socket) => {
 
   // ピースが離されたときのイベント
   socket.on('piece released', (data) => {
+    console.log("release呼ばれたよ！")
     if (currentlyClicked[data.index]) {
       console.log("removeの前")
       console.log(currentlyClicked[data.index])
