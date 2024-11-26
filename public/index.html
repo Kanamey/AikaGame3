@@ -1,3 +1,4 @@
+<!-- 二人同時に同じピースをクリックすると、右上に赤丸表示 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -94,7 +95,6 @@
     let isPlayer = false;
     let gameStarted = false;
     let currentPieceIndex = null;
-    let canMovePiece = false;
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -137,7 +137,7 @@
 
         let offsetX, offsetY;
         piece.addEventListener('mousedown', (e) => {
-          if (!isPlayer || piece.dataset.snapped === "true" || !canMovePiece) return;
+          if (!isPlayer || piece.dataset.snapped === "true") return;
 
           offsetX = e.clientX - piece.offsetLeft;
           offsetY = e.clientY - piece.offsetTop;
@@ -146,7 +146,6 @@
           socket.emit('piece clicked', { index: currentPieceIndex });
 
           const onMouseMove = (event) => {
-            if (!canMovePiece) return; // 赤丸が表示されている間のみピースを動かせる
             piece.style.left = `${event.clientX - offsetX}px`;
             piece.style.top = `${event.clientY - offsetY}px`;
             socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
@@ -197,7 +196,7 @@
       const piece = document.querySelector(`.piece[data-index='${data.index}']`);
       if (piece) {
         piece.style.left = `${data.left}px`;
-        piece.style.top = `${data.top}`;
+        piece.style.top = `${data.top}px`;
         piece.style.pointerEvents = 'none';
         piece.dataset.snapped = "true";
       }
@@ -213,12 +212,10 @@
 
     socket.on('both clicked', () => {
       sameClickIndicator.style.display = 'block';
-      canMovePiece = true; // 赤丸が表示されている間のみピースを動かせる
     });
 
     socket.on('not both clicked', () => {
       sameClickIndicator.style.display = 'none';
-      canMovePiece = false; // 赤丸が消えたらピースを動かせない
     });
 
     function checkCompletion() {
