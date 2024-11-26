@@ -197,7 +197,7 @@
       const piece = document.querySelector(`.piece[data-index='${data.index}']`);
       if (piece) {
         piece.style.left = `${data.left}px`;
-        piece.style.top = `${data.top}px`;
+        piece.style.top = `${data.top}`;
         piece.style.pointerEvents = 'none';
         piece.dataset.snapped = "true";
       }
