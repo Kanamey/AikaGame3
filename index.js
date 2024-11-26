@@ -69,8 +69,10 @@ io.on('connection', (socket) => {
   socket.on('piece released', (data) => {
     if (currentlyClicked[data.index]) {
       console.log("removeの前")
+      console.log(currentlyClicked[data.index])
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
       console.log("removeの後")
+      console.log(currentlyClicked[data.index])
       if (currentlyClicked[data.index].length < 2) {
         io.emit('not both clicked');
       }
