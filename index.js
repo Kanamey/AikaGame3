@@ -51,6 +51,7 @@ io.on('connection', (socket) => {
 
   // ピースがクリックされたときのイベント
   socket.on('piece clicked', (data) => {
+    console.log("clicked")
     console.log(currentlyClicked[data.index])
     console.log(socket.io)
     if (!currentlyClicked[data.index]) {
