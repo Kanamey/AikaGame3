@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     }
 
     if (currentlyClicked[data.index].length === 2) {
-      io.emit('both clicked'); // 全クライアントに両方がクリックしていることを通知
+      io.emit('both clicked', { index: data.index }); // 全クライアントに両方がクリックしていることを通知
     }
   });
 
@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
     if (currentlyClicked[data.index]) {
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
       if (currentlyClicked[data.index].length < 2) {
-        io.emit('not both clicked');
+        io.emit('not both clicked', { index: data.index });
       }
     }
   });
@@ -117,7 +117,7 @@ io.on('connection', (socket) => {
     for (let index in currentlyClicked) {
       currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
       if (currentlyClicked[index].length < 2) {
-        io.emit('not both clicked');
+        io.emit('not both clicked', { index: parseInt(index) });
       }
     }
   });
