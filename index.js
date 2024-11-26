@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
     if (data.participantLetter === 'watch') {
       socket.emit('watch only');
     } else {
-      socket.emit('game started for participant');
+      socket.emit('game started for participant'); // ゲームを開始するクライアントにのみ通知
     }
 
     // ゲームログファイルの作成
@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     }
 
     if (currentlyClicked[data.index].length === 2) {
-      io.emit('both clicked', { index: data.index }); // 全クライアントに両方がクリックしていることを通知
+      io.emit('both clicked'); // 全クライアントに両方がクリックしていることを通知
     }
   });
 
@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
     if (currentlyClicked[data.index]) {
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
       if (currentlyClicked[data.index].length < 2) {
-        io.emit('not both clicked', { index: data.index });
+        io.emit('not both clicked'); // 両方がクリックを離したことを通知
       }
     }
   });
@@ -117,7 +117,7 @@ io.on('connection', (socket) => {
     for (let index in currentlyClicked) {
       currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
       if (currentlyClicked[index].length < 2) {
-        io.emit('not both clicked', { index: parseInt(index) });
+        io.emit('not both clicked');
       }
     }
   });
