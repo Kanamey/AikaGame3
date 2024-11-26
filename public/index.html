@@ -148,11 +148,12 @@
           socket.emit('piece clicked', { index: currentPieceIndex });
 
           const onMouseMove = (event) => {
-            if(!canMovePiece) return;
+            if(canMovePiece){
+              piece.style.left = `${event.clientX - offsetX}px`;
+              piece.style.top = `${event.clientY - offsetY}px`;
+              socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
+            };
             // if (!canMovePiece) return; // 赤丸が表示されている間のみピースを動かせる
-            piece.style.left = `${event.clientX - offsetX}px`;
-            piece.style.top = `${event.clientY - offsetY}px`;
-            socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
           };
 
           const onMouseUp = () => {
