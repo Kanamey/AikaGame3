@@ -53,19 +53,15 @@ io.on('connection', (socket) => {
 
   // ピースがクリックされたときのイベント
   socket.on('piece clicked', (data) => {
-    console.log("clicked")
     if (!currentlyClicked[data.index]) {
-      console.log("data.indexない")
       currentlyClicked[data.index] = [];
-      console.log("data.index定義")
     }
-    console.log("clicked1")
     currentlyClicked[data.index].push(socket.id);
-    console.log("clicked2")
 
     if (currentlyClicked[data.index].length === 2) {
       io.emit('both clicked');
-      console.log("both clicked")
+    }else{
+      io.emit('not both clicked');
     }
   });
 
