@@ -23,6 +23,7 @@ let currentlyClicked = {}; // 各ピースのクリック状態を保持
 // サーバーの起動
 http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log('Initial puzzle positions:', puzzlePositions);
 });
 
 // ソケット接続の処理
@@ -55,8 +56,8 @@ io.on('connection', (socket) => {
     }
     if (!currentlyClicked[data.index].includes(socket.id)) {
       currentlyClicked[data.index].push(socket.id);
+      console.log("clicking!")
     }
-
     if (currentlyClicked[data.index].length === 2) {
       io.emit('both clicked'); // 全クライアントに両方がクリックしていることを通知
     }
@@ -74,14 +75,19 @@ io.on('connection', (socket) => {
 
   // ピースの移動イベント
   socket.on('piece move', (data) => {
+    // クリックされているピースのエントリが存在し、かつそのピースを2人のクライアントが同時にクリックしている場合のみピースの移動を許可
     if (currentlyClicked[data.index] && currentlyClicked[data.index].length === 2) {
+      // ピースの位置情報を更新
       puzzlePositions[data.index] = { left: data.left, top: data.top, snapped: false };
       socket.broadcast.emit('piece move', data);
     }
+
+
   });
 
   // ピースが正しい位置にスナップされた場合のイベント
   socket.on('piece snap', (data) => {
+        // サーバー側でピースの位置を確定
     const correctX = (data.index % 4) * 150;
     const correctY = Math.floor(data.index / 4) * 150;
     puzzlePositions[data.index] = { left: correctX, top: correctY, snapped: true };
