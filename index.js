@@ -1,4 +1,3 @@
-// 二人同時に同じピースをクリックすると、右上に赤丸表示
 // 必要なモジュールのインポート
 const express = require('express');
 const app = express();
