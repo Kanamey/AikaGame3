@@ -137,7 +137,9 @@
 
         let offsetX, offsetY;
         piece.addEventListener('mousedown', (e) => {
-          if (!isPlayer || piece.dataset.snapped === "true" || !canMovePiece) return;
+          if (!isPlayer || piece.dataset.snapped === "true") return;
+        //   if (!isPlayer || piece.dataset.snapped === "true" || !canMovePiece) return;
+
 
           offsetX = e.clientX - piece.offsetLeft;
           offsetY = e.clientY - piece.offsetTop;
@@ -146,11 +148,12 @@
           socket.emit('piece clicked', { index: currentPieceIndex });
 
           const onMouseMove = (event) => {
-            if (canMovePiece) {
+            if(canMovePiece){
               piece.style.left = `${event.clientX - offsetX}px`;
               piece.style.top = `${event.clientY - offsetY}px`;
               socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
-            }
+            };
+            // if (!canMovePiece) return; // 赤丸が表示されている間のみピースを動かせる
           };
 
           const onMouseUp = () => {
@@ -171,6 +174,7 @@
               piece.dataset.snapped = "true";
               socket.emit('piece snap', { index: i, left: correctX, top: correctY });
             } else {
+              // すでにスナップされていた場合は正しい位置に戻す
               if (piece.dataset.snapped === "true") {
                 socket.emit('piece snap', { index: i, left: correctX, top: correctY });
               }
@@ -219,13 +223,6 @@
     socket.on('not both clicked', () => {
       sameClickIndicator.style.display = 'none';
       canMovePiece = false; // 赤丸が消えたらピースを動かせない
-    });
-
-    socket.on('bring to front', (data) => {
-      const piece = document.querySelector(`.piece[data-index='${data.index}']`);
-      if (piece) {
-        piece.style.zIndex = "1000"; // ピースを最前面に持ってくる
-      }
     });
 
     function checkCompletion() {
