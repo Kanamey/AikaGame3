@@ -36,6 +36,22 @@ io.on('connection', (socket) => {
   // 初期パズル位置情報を送信
   socket.emit('initialize puzzle', puzzlePositions);
 
+  // ゲームスタートイベント
+  socket.on('start game', (data) => {
+    console.log(`Game started by: ${data.participantNumber}${data.participantLetter}`);
+    if (data.participantLetter === 'watch') {
+      socket.emit('watch only');
+    } else {
+      socket.emit('game started for participant'); // ゲームを開始するクライアントにのみ通知
+    }
+
+    // ゲームログファイルの作成
+    socket.gameLogFile = `game_log_${data.participantNumber}_${data.participantLetter}.csv`;
+    fs.writeFileSync(socket.gameLogFile, 'Event,Duration (ms)\n', (err) => {
+      if (err) throw err;
+    });
+  });
+
   // プレイヤーのカーソル位置更新イベント
   socket.on('update cursor', (data) => {
     playerCursorPositions[socket.id] = { x: data.x, y: data.y };
@@ -90,6 +106,7 @@ io.on('connection', (socket) => {
   // ピースの移動イベント
   socket.on('piece move', (data) => {
     if (puzzlePositions[data.index].snapped) {
+      // すでにスナップされたピースは正しい位置に戻す
       socket.emit('piece snap', {
         index: data.index,
         left: puzzlePositions[data.index].left,
@@ -103,11 +120,16 @@ io.on('connection', (socket) => {
 
   // ピースが正しい位置にスナップされた場合のイベント
   socket.on('piece snap', (data) => {
+    // サーバー側でピースの位置を確定
     const correctX = (data.index % 4) * 150;
     const correctY = Math.floor(data.index / 4) * 150;
     puzzlePositions[data.index] = { left: correctX, top: correctY, snapped: true };
 
+    // 全てのクライアントにピースのスナップを通知
     io.emit('piece snap', { index: data.index, left: correctX, top: correctY });
+    console.log(`Piece ${data.index} snapped to correct position at (${correctX}, ${correctY})`);
+
+    // ロックするのは正解したピースのみ
     io.emit('lock piece', { index: data.index });
   });
 
@@ -131,6 +153,7 @@ io.on('connection', (socket) => {
   // ユーザーが切断された場合の処理
   socket.on('disconnect', () => {
     console.log('A user disconnected');
+    // クリック状態の管理から切断したユーザーを削除
     for (let index in currentlyClicked) {
       currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
       if (currentlyClicked[index].length < 2) {
