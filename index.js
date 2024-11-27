@@ -59,7 +59,6 @@ io.on('connection', (socket) => {
     currentlyClicked[data.index].push(socket.id);
 
     if (currentlyClicked[data.index].length === 2) {
-      // io.emit('bring to front'); // ピースを最前面に移動するためのイベントを送信
       io.emit('both clicked');
     }else{
       io.emit('not both clicked');
@@ -77,6 +76,7 @@ io.on('connection', (socket) => {
       console.log(currentlyClicked[data.index])
       if (currentlyClicked[data.index].length < 2) {
         io.emit('not both clicked');
+        return;
       }
     }
   });
