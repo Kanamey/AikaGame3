@@ -1,11 +1,9 @@
-// 二人同時に同じピースをクリックすると、右上に赤丸表示
 // 必要なモジュールのインポート
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const fs = require('fs');
-const path = require('path');
 
 // ポート設定
 const PORT = process.env.PORT || 10000;
@@ -60,20 +58,16 @@ io.on('connection', (socket) => {
 
     if (currentlyClicked[data.index].length === 2) {
       io.emit('both clicked');
-    }else{
+      io.emit('bring to front', { index: data.index }); // ピースを最前面に移動するためのイベントを送信
+    } else {
       io.emit('not both clicked');
     }
   });
 
   // ピースが離されたときのイベント
   socket.on('piece released', (data) => {
-    console.log("release呼ばれたよ！")
     if (currentlyClicked[data.index]) {
-      console.log("removeの前")
-      console.log(currentlyClicked[data.index])
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
-      console.log("removeの後")
-      console.log(currentlyClicked[data.index])
       if (currentlyClicked[data.index].length < 2) {
         io.emit('not both clicked');
       }
