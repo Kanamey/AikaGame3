@@ -56,6 +56,8 @@
       border-radius: 50%;
       display: none; /* 二人が同じピースをクリックしているときに表示 */
     }
+
+    
   </style>
 </head>
 <body>
@@ -95,6 +97,13 @@
     let gameStarted = false;
     let currentPieceIndex = null;
     let canMovePiece = false;
+
+      document.addEventListener('mousemove', (event) => {
+        if (gameStarted && isPlayer) {
+          socket.emit('update cursor', { x: event.clientX, y: event.clientY });
+        }
+  });
+
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -182,7 +191,7 @@
 
             checkCompletion();
           };
-
+          // mousemoveとmouseupの追跡を終了
           document.addEventListener('mousemove', onMouseMove);
           document.addEventListener('mouseup', onMouseUp);
         });
