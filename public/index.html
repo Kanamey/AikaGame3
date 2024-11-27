@@ -215,12 +215,12 @@
       }
     });
 
-    socket.on('bring to front', (data) => {
-      const piece = document.querySelector(`.piece[data-index='${data.index}']`);
-      if (piece) {
-        piece.style.zIndex = "1000"; // ピースを最前面に持ってくる
-      }
-    });
+    // socket.on('bring to front', (data) => {
+    //   const piece = document.querySelector(`.piece[data-index='${data.index}']`);
+    //   if (piece) {
+    //     piece.style.zIndex = "1000"; // ピースを最前面に持ってくる
+    //   }
+    // });
 
     socket.on('both clicked', () => {
       sameClickIndicator.style.display = 'block';
