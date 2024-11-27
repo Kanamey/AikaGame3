@@ -77,7 +77,6 @@ io.on('connection', (socket) => {
   // ピースの移動イベント
   socket.on('piece move', (data) => {
     if (puzzlePositions[data.index].snapped) {
-      // すでにスナップされたピースは正しい位置に戻す
       socket.emit('piece snap', {
         index: data.index,
         left: puzzlePositions[data.index].left,
@@ -91,16 +90,13 @@ io.on('connection', (socket) => {
 
   // ピースが正しい位置にスナップされた場合のイベント
   socket.on('piece snap', (data) => {
-    // サーバー側でピースの位置を確定
     const correctX = (data.index % 4) * 150;
     const correctY = Math.floor(data.index / 4) * 150;
     puzzlePositions[data.index] = { left: correctX, top: correctY, snapped: true };
 
-    // 全てのクライアントにピースのスナップを通知
     io.emit('piece snap', { index: data.index, left: correctX, top: correctY });
     console.log(`Piece ${data.index} snapped to correct position at (${correctX}, ${correctY})`);
 
-    // ロックするのは正解したピースのみ
     io.emit('lock piece', { index: data.index });
   });
 
@@ -124,7 +120,6 @@ io.on('connection', (socket) => {
   // ユーザーが切断された場合の処理
   socket.on('disconnect', () => {
     console.log('A user disconnected');
-    // クリック状態の管理から切断したユーザーを削除
     for (let index in currentlyClicked) {
       currentlyClicked[index] = currentlyClicked[index].filter(id => id !== socket.id);
       if (currentlyClicked[index].length < 2) {
