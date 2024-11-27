@@ -215,13 +215,6 @@
       }
     });
 
-    // socket.on('bring to front', (data) => {
-    //   const piece = document.querySelector(`.piece[data-index='${data.index}']`);
-    //   if (piece) {
-    //     piece.style.zIndex = "1000"; // ピースを最前面に持ってくる
-    //   }
-    // });
-
     socket.on('both clicked', () => {
       sameClickIndicator.style.display = 'block';
       canMovePiece = true; // 赤丸が表示されている間のみピースを動かせる
@@ -231,8 +224,6 @@
       sameClickIndicator.style.display = 'none';
       canMovePiece = false; // 赤丸が消えたらピースを動かせない
     });
-
-    
 
     function checkCompletion() {
       const allSnapped = Array.from(document.querySelectorAll('.piece')).every(piece => piece.dataset.snapped === "true");
