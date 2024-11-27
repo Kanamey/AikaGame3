@@ -74,10 +74,10 @@ io.on('connection', (socket) => {
       currentlyClicked[data.index] = currentlyClicked[data.index].filter(id => id !== socket.id);
       console.log("removeの後")
       console.log(currentlyClicked[data.index])
-      io.emit('not both clicked');　//ここに移動してみた
-      // if (currentlyClicked[data.index].length < 2) {
-      //   io.emit('not both clicked');
-      // }
+      // io.emit('not both clicked');　//ここに移動してみたら違った
+      if (currentlyClicked[data.index].length < 2) {
+        io.emit('not both clicked');
+      }
     }
   });
 
