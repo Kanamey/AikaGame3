@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
 
     if (currentlyClicked[data.index].length === 2) {
       io.emit('both clicked');
-      io.emit('bring to front', { index: data.index }); // ピースを最前面に移動するためのイベントを送信
+      io.emit('bring to front'); // ピースを最前面に移動するためのイベントを送信
     }else{
       io.emit('not both clicked');
     }
