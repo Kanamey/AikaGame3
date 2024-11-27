@@ -53,11 +53,19 @@ io.on('connection', (socket) => {
 
   // ピースがクリックされたときのイベント
   socket.on('piece clicked', (data) => {
+    // クリックされたピースに対するエントリがまだ存在しない場合、新しい空の配列を作成
     if (!currentlyClicked[data.index]) {
       currentlyClicked[data.index] = [];
     }
-    currentlyClicked[data.index].push(socket.id);
+    
+     // 現在クリックしたソケットIDが、すでにピースに対して記録されていない場合、そのIDを追加
+    // これにより、どのクライアントがピースをクリックしているかを追跡
+    if (!currentlyClicked[data.index].includes(socket.id)) {
+      currentlyClicked[data.index].push(socket.id);
+    }
 
+    // 同じピースに対して2つのクライアントがクリックしている場合
+    // そのピースが同時にクリックされていることを全てのクライアントに通知するイベントを送信
     if (currentlyClicked[data.index].length === 2) {
       io.emit('both clicked');
     }else{
