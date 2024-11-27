@@ -56,8 +56,6 @@
       border-radius: 50%;
       display: none; /* 二人が同じピースをクリックしているときに表示 */
     }
-
-    
   </style>
 </head>
 <body>
@@ -97,13 +95,6 @@
     let gameStarted = false;
     let currentPieceIndex = null;
     let canMovePiece = false;
-
-      document.addEventListener('mousemove', (event) => {
-        if (gameStarted && isPlayer) {
-          socket.emit('update cursor', { x: event.clientX, y: event.clientY });
-        }
-  });
-
 
     startButton.addEventListener('click', () => {
       const participantNumber = participantNumberSelect.value;
@@ -146,9 +137,7 @@
 
         let offsetX, offsetY;
         piece.addEventListener('mousedown', (e) => {
-          if (!isPlayer || piece.dataset.snapped === "true") return;
-        //   if (!isPlayer || piece.dataset.snapped === "true" || !canMovePiece) return;
-
+          if (!isPlayer || piece.dataset.snapped === "true" || !canMovePiece) return;
 
           offsetX = e.clientX - piece.offsetLeft;
           offsetY = e.clientY - piece.offsetTop;
@@ -157,12 +146,13 @@
           socket.emit('piece clicked', { index: currentPieceIndex });
 
           const onMouseMove = (event) => {
-            if(canMovePiece){
-              piece.style.left = `${event.clientX - offsetX}px`;
-              piece.style.top = `${event.clientY - offsetY}px`;
+            if (canMovePiece) {
+              const midX = (event.clientX - offsetX);
+              const midY = (event.clientY - offsetY);
+              piece.style.left = `${midX}px`;
+              piece.style.top = `${midY}px`;
               socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
-            };
-            // if (!canMovePiece) return; // 赤丸が表示されている間のみピースを動かせる
+            }
           };
 
           const onMouseUp = () => {
@@ -183,7 +173,6 @@
               piece.dataset.snapped = "true";
               socket.emit('piece snap', { index: i, left: correctX, top: correctY });
             } else {
-              // すでにスナップされていた場合は正しい位置に戻す
               if (piece.dataset.snapped === "true") {
                 socket.emit('piece snap', { index: i, left: correctX, top: correctY });
               }
@@ -191,7 +180,7 @@
 
             checkCompletion();
           };
-          // mousemoveとmouseupの追跡を終了
+
           document.addEventListener('mousemove', onMouseMove);
           document.addEventListener('mouseup', onMouseUp);
         });
