@@ -147,9 +147,8 @@
 
           const onMouseMove = (event) => {
             if (canMovePiece) {
-              piece.style.left = `${event.clientX - offsetX}px`;
-              piece.style.top = `${event.clientY - offsetY}px`;
-              socket.emit('piece move', { index: currentPieceIndex, left: parseFloat(piece.style.left), top: parseFloat(piece.style.top) });
+              // マウス移動時のカーソル位置を送信
+              socket.emit('update cursor', { x: event.clientX, y: event.clientY });
             }
           };
 
