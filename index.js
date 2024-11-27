@@ -81,9 +81,8 @@ io.on('connection', (socket) => {
       currentlyClicked[data.index] = [];
     }
 
-    if (!currentlyClicked[data.index].includes(socket.id)) {
-      currentlyClicked[data.index].push(socket.id);
-    }
+    // クリックしたIDを無条件に追加
+    currentlyClicked[data.index].push(socket.id);
 
     if (currentlyClicked[data.index].length === 2) {
       io.emit('both clicked');
