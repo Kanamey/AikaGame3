@@ -66,18 +66,22 @@
             // 初期豆の位置情報をサーバーから受け取って描画
             socket.on("initializeBeans", (beans) => {
                 beans.forEach((beanData, index) => {
-                    const bean = document.createElement("div");
-                    bean.classList.add("bean");
-                    bean.style.left = `${beanData.left}px`;
-                    bean.style.top = `${beanData.top}px`;
-                    bean.dataset.index = index;
-
-                    document.body.appendChild(bean);
-
-                    // ドラッグ＆ドロップのイベントリスナーを追加
-                    bean.addEventListener("mousedown", (e) => startDrag(e, socket));
+                    createBean(beanData, index);
                 });
             });
+
+            function createBean(beanData, index) {
+                const bean = document.createElement("div");
+                bean.classList.add("bean");
+                bean.style.left = `${beanData.left}px`;
+                bean.style.top = `${beanData.top}px`;
+                bean.dataset.index = index;
+
+                document.body.appendChild(bean);
+
+                // ドラッグ＆ドロップのイベントリスナーを追加
+                bean.addEventListener("mousedown", (e) => startDrag(e, socket));
+            }
 
             function startDrag(e, socket) {
                 const bean = e.target;
@@ -148,6 +152,11 @@
                 if (bean) {
                     shrinkAndRemoveBean(bean, index);
                 }
+            });
+
+            // 新しい豆を追加する
+            socket.on("addNewBean", (beanData) => {
+                createBean(beanData, beanData.index);
             });
         });
     </script>
