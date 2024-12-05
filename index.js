@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 豆が削除されたことを他のクライアントに通知
+    // 豆が削除されたことを他のクライアントに通知し、新しい豆を追加
     socket.on("beanRemoved", (index) => {
         beans[index] = null; // 豆を削除としてマーク
         socket.broadcast.emit("beanRemoved", index);
