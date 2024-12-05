@@ -43,16 +43,24 @@ io.on("connection", (socket) => {
     // 豆が放された時の処理
     socket.on("beanReleased", (index) => {
         beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
-        
+
         if (beans[index].touchedBy.length < 2) {
             io.emit("beanColorChange", { index: index, color: "brown" });
         }
     });
 
+    // 豆が削除されたことを他のクライアントに通知
+    socket.on("beanRemoved", (index) => {
+        beans[index] = null; // 豆を削除としてマーク
+        socket.broadcast.emit("beanRemoved", index);
+    });
+
     socket.on("disconnect", () => {
         console.log("A user disconnected");
         beans.forEach(bean => {
-            bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
+            if (bean) {
+                bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
+            }
         });
     });
 });
