@@ -104,24 +104,25 @@
                     document.removeEventListener("mouseup", onMouseUp);
                     socket.emit("beanReleased", index);
 
-                    // 右のお皿に豆が移動されたかどうかを確認
-                    const rightBowlRect = rightBowl.getBoundingClientRect();
-                    const beanRect = bean.getBoundingClientRect();
-                    if (
-                        beanRect.left > rightBowlRect.left &&
-                        beanRect.right < rightBowlRect.right &&
-                        beanRect.top > rightBowlRect.top &&
-                        beanRect.bottom < rightBowlRect.bottom
-                    ) {
-                        rightBowl.appendChild(bean);
-                        bean.style.position = "relative";
-                        bean.style.left = `${Math.random() * 100}px`;
-                        bean.style.top = `${Math.random() * 100}px`;
-                    }
+                    // 豆が消滅するアニメーションを開始
+                    shrinkAndRemoveBean(bean, index);
                 }
 
                 document.addEventListener("mousemove", onMouseMove);
                 document.addEventListener("mouseup", onMouseUp);
+            }
+
+            // 豆が小さくなり消えていくアニメーション
+            function shrinkAndRemoveBean(bean, index) {
+                bean.style.transition = "transform 1s, opacity 1s";
+                bean.style.transform = "scale(0)";
+                bean.style.opacity = "0";
+
+                // アニメーション後に要素を削除
+                setTimeout(() => {
+                    bean.remove();
+                    socket.emit("beanRemoved", index);
+                }, 1000);
             }
 
             // 他のクライアントからの豆の移動情報を受け取って更新
@@ -138,6 +139,14 @@
                 const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
                 if (bean) {
                     bean.style.backgroundColor = data.color;
+                }
+            });
+
+            // 他のプレイヤーから豆の削除情報を受け取る
+            socket.on("beanRemoved", (index) => {
+                const bean = document.querySelector(`.bean[data-index="${index}"]`);
+                if (bean) {
+                    shrinkAndRemoveBean(bean, index);
                 }
             });
         });
