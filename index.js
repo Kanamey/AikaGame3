@@ -26,7 +26,7 @@ io.on("connection", (socket) => {
     socket.on("beanMoved", (data) => {
         beans[data.index].left = data.left;
         beans[data.index].top = data.top;
-        socket.broadcast.emit("beanMoved", data);
+        io.emit("beanMoved", data); // 全てのクライアントにブロードキャスト
     });
 
     // 豆が触られた時の処理
@@ -56,7 +56,8 @@ io.on("connection", (socket) => {
             top: Math.random() * 100,
             touchedBy: []
         };
-        io.emit("addNewBean", { index: index, left: beans[index].left, top: beans[index].top });
+        io.emit("beanRemoved", index); // 全てのクライアントに削除情報をブロードキャスト
+        io.emit("addNewBean", { index: index, left: beans[index].left, top: beans[index].top }); // 新しい豆の追加情報を全てのクライアントに送信
     });
 
     socket.on("disconnect", () => {
