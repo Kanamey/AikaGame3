@@ -64,6 +64,9 @@
 
             function startDrag(e, socket) {
                 const bean = e.target;
+                const index = bean.dataset.index;
+                socket.emit("beanTouched", index);
+
                 let offsetX = e.clientX - bean.getBoundingClientRect().left;
                 let offsetY = e.clientY - bean.getBoundingClientRect().top;
 
@@ -82,6 +85,7 @@
                 function onMouseUp() {
                     document.removeEventListener("mousemove", onMouseMove);
                     document.removeEventListener("mouseup", onMouseUp);
+                    socket.emit("beanReleased", index);
 
                     // 右のお皿に豆が移動されたかどうかを確認
                     const rightBowlRect = rightBowl.getBoundingClientRect();
@@ -109,6 +113,14 @@
                 if (bean) {
                     bean.style.left = `${data.left}px`;
                     bean.style.top = `${data.top}px`;
+                }
+            });
+
+            // 豆の色を変更する
+            socket.on("beanColorChange", (data) => {
+                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
+                if (bean) {
+                    bean.style.backgroundColor = data.color;
                 }
             });
         });
