@@ -53,6 +53,15 @@ io.on("connection", (socket) => {
     socket.on("beanRemoved", (index) => {
         beans[index] = null; // 豆を削除としてマーク
         socket.broadcast.emit("beanRemoved", index);
+
+        // 新しい豆を追加する
+        const newBean = {
+            left: Math.random() * 100,  // 左のお皿内のランダム位置に配置
+            top: Math.random() * 100,
+            touchedBy: []
+        };
+        beans[index] = newBean; // 消えた豆の位置に新しい豆を追加
+        io.emit("addNewBean", { index: index, left: newBean.left, top: newBean.top });
     });
 
     socket.on("disconnect", () => {
