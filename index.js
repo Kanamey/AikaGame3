@@ -51,13 +51,19 @@ io.on("connection", (socket) => {
 
     // 豆が削除されたことを他のクライアントに通知し、新しい豆を追加
     socket.on("beanRemoved", (index) => {
-        beans[index] = {
-            left: Math.random() * 100,  // 左のお皿内のランダム位置に配置
-            top: Math.random() * 100,
-            touchedBy: []
-        };
+        beans[index] = null; // 一旦削除
         io.emit("beanRemoved", index); // 全てのクライアントに削除情報をブロードキャスト
-        io.emit("addNewBean", { index: index, left: beans[index].left, top: beans[index].top }); // 新しい豆の追加情報を全てのクライアントに送信
+
+        // 新しい豆を一定時間後に生成する
+        setTimeout(() => {
+            const newBean = {
+                left: Math.random() * 100,  // 左のお皿内のランダム位置に配置
+                top: Math.random() * 100,
+                touchedBy: []
+            };
+            beans[index] = newBean; // 消えた豆の位置に新しい豆を追加
+            io.emit("addNewBean", { index: index, left: newBean.left, top: newBean.top }); // 新しい豆の追加情報を全てのクライアントに送信
+        }, 1000); // アニメーション終了後に新しい豆を生成
     });
 
     socket.on("disconnect", () => {
