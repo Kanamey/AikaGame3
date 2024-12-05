@@ -1,53 +1,37 @@
+<!-- // 二人別々に豆を二人で移動できる -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <title>豆移しゲーム</title>
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* スクロールバーが表示されないようにする */
-        }
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
-            box-sizing: border-box; /* パディングなどを含めて要素を計算する */
         }
         #game-container {
             display: flex;
-            justify-content: space-around; /* 両端に余白を取りつつ要素を配置 */
-            align-items: center;
-            width: 100vw;
-            height: 100vh;
-            box-sizing: border-box;
-            padding: 0; /* パディングをゼロにして、要素が画面全体に広がるようにする */
+            justify-content: space-between;
+            width: 80vw; /* 画面の幅の80%を使う */
+            max-width: 1000px; /* 最大幅を制限することでレイアウトが崩れるのを防ぐ */
         }
         .bowl {
-            width: 15vw; /* 画面の幅の15% */
-            height: 15vw; /* 同じ幅を使用して円形を維持 */
-            max-width: 200px; /* 最大幅を制限して巨大化しすぎないようにする */
-            max-height: 200px;
+            width: 150px;
+            height: 150px;
             border: 2px solid #000;
             border-radius: 50%;
             position: relative;
-            box-sizing: border-box;
         }
         .bean {
-            width: 3vw;  /* 画面の幅の3%に相当するサイズ */
-            height: 3vw;
-            max-width: 30px;  /* 最大幅を30pxに制限 */
-            max-height: 30px; /* 最大高さを30pxに制限 */
+            width: 20px;
+            height: 20px;
             background-color: brown;
             border-radius: 50%;
             position: absolute;
             cursor: grab;
-            box-sizing: border-box;
         }
     </style>
 </head>
@@ -66,30 +50,21 @@
             // 初期豆の位置情報をサーバーから受け取って描画
             socket.on("initializeBeans", (beans) => {
                 beans.forEach((beanData, index) => {
-                    if (beanData) {
-                        createBean(beanData, index);
-                    }
+                    const bean = document.createElement("div");
+                    bean.classList.add("bean");
+                    bean.style.left = `${beanData.left}px`;
+                    bean.style.top = `${beanData.top}px`;
+                    bean.dataset.index = index;
+
+                    document.body.appendChild(bean);
+
+                    // ドラッグ＆ドロップのイベントリスナーを追加
+                    bean.addEventListener("mousedown", (e) => startDrag(e, socket));
                 });
             });
 
-            function createBean(beanData, index) {
-                const bean = document.createElement("div");
-                bean.classList.add("bean");
-                bean.style.left = `${beanData.left}px`;
-                bean.style.top = `${beanData.top}px`;
-                bean.dataset.index = index;
-
-                document.body.appendChild(bean);
-
-                // ドラッグ＆ドロップのイベントリスナーを追加
-                bean.addEventListener("mousedown", (e) => startDrag(e, socket));
-            }
-
             function startDrag(e, socket) {
                 const bean = e.target;
-                const index = bean.dataset.index;
-                socket.emit("beanTouched", index);
-
                 let offsetX = e.clientX - bean.getBoundingClientRect().left;
                 let offsetY = e.clientY - bean.getBoundingClientRect().top;
 
@@ -108,27 +83,25 @@
                 function onMouseUp() {
                     document.removeEventListener("mousemove", onMouseMove);
                     document.removeEventListener("mouseup", onMouseUp);
-                    socket.emit("beanReleased", index);
 
-                    // 豆が消滅するアニメーションを開始
-                    shrinkAndRemoveBean(bean, index);
+                    // 右のお皿に豆が移動されたかどうかを確認
+                    const rightBowlRect = rightBowl.getBoundingClientRect();
+                    const beanRect = bean.getBoundingClientRect();
+                    if (
+                        beanRect.left > rightBowlRect.left &&
+                        beanRect.right < rightBowlRect.right &&
+                        beanRect.top > rightBowlRect.top &&
+                        beanRect.bottom < rightBowlRect.bottom
+                    ) {
+                        rightBowl.appendChild(bean);
+                        bean.style.position = "relative";
+                        bean.style.left = `${Math.random() * 100}px`;
+                        bean.style.top = `${Math.random() * 100}px`;
+                    }
                 }
 
                 document.addEventListener("mousemove", onMouseMove);
                 document.addEventListener("mouseup", onMouseUp);
-            }
-
-            // 豆が小さくなり消えていくアニメーション
-            function shrinkAndRemoveBean(bean, index) {
-                bean.style.transition = "transform 1s, opacity 1s";
-                bean.style.transform = "scale(0)";
-                bean.style.opacity = "0";
-
-                // アニメーション後に要素を削除
-                setTimeout(() => {
-                    bean.remove();
-                    socket.emit("beanRemoved", index);
-                }, 1000);
             }
 
             // 他のクライアントからの豆の移動情報を受け取って更新
@@ -138,27 +111,6 @@
                     bean.style.left = `${data.left}px`;
                     bean.style.top = `${data.top}px`;
                 }
-            });
-
-            // 豆の色を変更する
-            socket.on("beanColorChange", (data) => {
-                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
-                if (bean) {
-                    bean.style.backgroundColor = data.color;
-                }
-            });
-
-            // 他のクライアントから豆の削除情報を受け取る
-            socket.on("beanRemoved", (index) => {
-                const bean = document.querySelector(`.bean[data-index="${index}"]`);
-                if (bean) {
-                    shrinkAndRemoveBean(bean, index);
-                }
-            });
-
-            // 新しい豆を追加する
-            socket.on("addNewBean", (beanData) => {
-                createBean(beanData, beanData.index);
             });
         });
     </script>
