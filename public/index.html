@@ -66,7 +66,9 @@
             // 初期豆の位置情報をサーバーから受け取って描画
             socket.on("initializeBeans", (beans) => {
                 beans.forEach((beanData, index) => {
-                    createBean(beanData, index);
+                    if (beanData) {
+                        createBean(beanData, index);
+                    }
                 });
             });
 
