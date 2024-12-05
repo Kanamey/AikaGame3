@@ -148,7 +148,7 @@
                 }
             });
 
-            // 他のプレイヤーから豆の削除情報を受け取る
+            // 他のクライアントから豆の削除情報を受け取る
             socket.on("beanRemoved", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
