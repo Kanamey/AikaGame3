@@ -4,33 +4,50 @@
     <meta charset="UTF-8">
     <title>豆移しゲーム</title>
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* スクロールバーが表示されないようにする */
+        }
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
+            box-sizing: border-box; /* パディングなどを含めて要素を計算する */
         }
         #game-container {
             display: flex;
-            justify-content: space-between;
-            width: 80vw; /* 画面の幅の80%を使う */
-            max-width: 1000px; /* 最大幅を制限することでレイアウトが崩れるのを防ぐ */
+            justify-content: space-around; /* 両端に余白を取りつつ要素を配置 */
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+            padding: 0; /* パディングをゼロにして、要素が画面全体に広がるようにする */
         }
         .bowl {
-            width: 150px;
-            height: 150px;
+            width: 15vw; /* 画面の幅の15% */
+            height: 15vw; /* 同じ幅を使用して円形を維持 */
+            max-width: 200px; /* 最大幅を制限して巨大化しすぎないようにする */
+            max-height: 200px;
             border: 2px solid #000;
             border-radius: 50%;
             position: relative;
+            box-sizing: border-box;
         }
         .bean {
-            width: 20px;
-            height: 20px;
+            width: 3vw;  /* 画面の幅の3%に相当するサイズ */
+            height: 3vw;
+            max-width: 30px;  /* 最大幅を30pxに制限 */
+            max-height: 30px; /* 最大高さを30pxに制限 */
             background-color: brown;
             border-radius: 50%;
             position: absolute;
             cursor: grab;
+            box-sizing: border-box;
         }
     </style>
 </head>
