@@ -10,7 +10,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden; /* スクロールバーが表示されないようにする */
-            box-sizing: border-box; /* パディングやボーダーを含めて要素を計算する */
+            box-sizing: border-box;
         }
         body {
             display: flex;
@@ -23,31 +23,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 90vw; /* 画面幅の90%を使用する */
-            height: 90vh; /* 画面高さの90%を使用する */
-            max-width: 100%; /* 最大幅を画面いっぱいにする */
-            max-height: 100%; /* 最大高さを画面いっぱいにする */
+            width: 90vw;
+            height: 90vh;
         }
         .bowl {
-            width: 15vw; /* 画面幅の15% */
-            height: 15vw; /* 画面幅の15%で正方形を維持する */
-            max-width: 200px; /* 最大幅を制限する */
-            max-height: 200px; /* 最大高さを制限する */
+            width: 15vw;
+            height: 15vw;
+            max-width: 200px;
+            max-height: 200px;
             border: 2px solid #000;
             border-radius: 50%;
             position: relative;
-            box-sizing: border-box;
         }
         .bean {
-            width: 3vw;  /* 画面幅の3%に相当するサイズ */
+            width: 3vw;
             height: 3vw;
-            max-width: 30px;  /* 最大幅を30pxに制限 */
-            max-height: 30px; /* 最大高さを30pxに制限 */
+            max-width: 30px;
+            max-height: 30px;
             background-color: brown;
             border-radius: 50%;
             position: absolute;
             cursor: grab;
             box-sizing: border-box;
+            transition: background-color 0.3s; /* スムーズに色が変わる */
+        }
+        .glow {
+            background-color: yellow; /* 光るときの色 */
+            box-shadow: 0 0 10px yellow; /* 発光の視覚効果 */
         }
     </style>
 </head>
@@ -75,14 +77,18 @@
                     document.body.appendChild(bean);
 
                     // ドラッグ＆ドロップのイベントリスナーを追加
-                    bean.addEventListener("mousedown", (e) => startDrag(e, socket));
+                    bean.addEventListener("mousedown", (e) => startDrag(e, socket, index));
+                    bean.addEventListener("mouseup", () => socket.emit("beanReleased", index));
                 });
             });
 
-            function startDrag(e, socket) {
+            function startDrag(e, socket, index) {
                 const bean = e.target;
                 let offsetX = e.clientX - bean.getBoundingClientRect().left;
                 let offsetY = e.clientY - bean.getBoundingClientRect().top;
+
+                // サーバーに豆が触られたことを通知
+                socket.emit("beanTouched", index);
 
                 function onMouseMove(event) {
                     bean.style.left = `${event.clientX - offsetX}px`;
@@ -126,6 +132,22 @@
                 if (bean) {
                     bean.style.left = `${data.left}px`;
                     bean.style.top = `${data.top}px`;
+                }
+            });
+
+            // 二人が同時に触った豆を光らせる
+            socket.on("beanGlow", (index) => {
+                const bean = document.querySelector(`.bean[data-index="${index}"]`);
+                if (bean) {
+                    bean.classList.add("glow");
+                }
+            });
+
+            // 豆の光を止める
+            socket.on("beanStopGlow", (index) => {
+                const bean = document.querySelector(`.bean[data-index="${index}"]`);
+                if (bean) {
+                    bean.classList.remove("glow");
                 }
             });
         });
