@@ -7,6 +7,7 @@ const io = socketIo(server);
 
 app.use(express.static("public"));
 
+// 初期豆の設定
 let beans = [];
 for (let i = 0; i < 5; i++) {
     beans.push({
@@ -21,6 +22,13 @@ io.on("connection", (socket) => {
 
     // 初期状態の豆の位置情報を送信
     socket.emit("initializeBeans", beans);
+
+    // 他のプレイヤーが豆を移動したときの処理
+    socket.on("beanMoved", (data) => {
+        beans[data.index].left = data.left;
+        beans[data.index].top = data.top;
+        io.emit("beanMoved", data); // 全クライアントにブロードキャスト
+    });
 
     // 豆が触られた時の処理
     socket.on("beanTouched", (index) => {
@@ -40,13 +48,6 @@ io.on("connection", (socket) => {
 
         // 光を止める
         io.emit("beanStopGlow", index);
-    });
-
-    // 豆の移動情報を他のクライアントにブロードキャスト
-    socket.on("beanMoved", (data) => {
-        beans[data.index].left = data.left;
-        beans[data.index].top = data.top;
-        io.emit("beanMoved", data);
     });
 
     socket.on("disconnect", () => {
