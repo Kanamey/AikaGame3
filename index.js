@@ -52,13 +52,6 @@ io.on("connection", (socket) => {
         io.emit("updateCursorMidpoint", data); // 全クライアントに中点情報を送信
     });
 
-    // 豆が移動された時の処理
-    socket.on("beanMoved", (data) => {
-        beans[data.index].left = data.left;
-        beans[data.index].top = data.top;
-        io.emit("beanMoved", data); // 全クライアントにブロードキャスト
-    });
-
     socket.on("disconnect", () => {
         console.log("A user disconnected");
         beans.forEach(bean => {
