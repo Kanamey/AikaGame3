@@ -64,6 +64,7 @@
             const socket = io();
             const leftBowl = document.getElementById("left-bowl");
             const rightBowl = document.getElementById("right-bowl");
+            let mousePositions = {}; // 各プレイヤーのマウス位置を管理
 
             // 初期豆の位置情報をサーバーから受け取って描画
             socket.on("initializeBeans", (beans) => {
@@ -76,8 +77,7 @@
 
                     document.body.appendChild(bean);
 
-                    // ドラッグ＆ドロップのイベントリスナーを追加
-                    bean.addEventListener("mousedown", (e) => startDrag(e, socket, index));
+                    bean.addEventListener("mousedown", () => socket.emit("beanTouched", index));
                     bean.addEventListener("mouseup", () => socket.emit("beanReleased", index));
                 });
             });
@@ -140,14 +140,29 @@
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
                     bean.classList.add("glow");
+
+                    const interval = setInterval(() => {
+                        if (mousePositions) {
+                            const positions = Object.values(mousePositions);
+                            if (positions.length === 2) {
+                                const x = (positions[0].x + positions[1].x) / 2;
+                                const y = (positions[0].y + positions[1].y) / 2;
+                                socket.emit("beanMoveToCenter", { index, position: { x, y } });
+                            }
+                        }
+                    }, 50);
+
+                    socket.once("beanStopGlow", () => {
+                        clearInterval(interval);
+                    });
                 }
             });
 
-            // 豆の光を止める
-            socket.on("beanStopGlow", (index) => {
-                const bean = document.querySelector(`.bean[data-index="${index}"]`);
+            socket.on("beanMoveToCenter", (data) => {
+                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
                 if (bean) {
-                    bean.classList.remove("glow");
+                    bean.style.left = `${data.position.x}px`;
+                    bean.style.top = `${data.position.y}px`;
                 }
             });
         });
