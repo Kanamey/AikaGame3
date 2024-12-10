@@ -66,7 +66,6 @@
             const rightBowl = document.getElementById("right-bowl");
             let mousePositions = {}; // 各プレイヤーのマウス位置を管理
 
-            // 初期豆の位置情報をサーバーから受け取って描画
             socket.on("initializeBeans", (beans) => {
                 beans.forEach((beanData, index) => {
                     const bean = document.createElement("div");
@@ -77,59 +76,10 @@
 
                     document.body.appendChild(bean);
 
-                    bean.addEventListener("mousedown", (e) => startDrag(e, socket, index));
+                    bean.addEventListener("mousedown", () => socket.emit("beanTouched", index));
                     bean.addEventListener("mouseup", () => socket.emit("beanReleased", index));
                 });
             });
-
-            function startDrag(e, socket, index) {
-                const bean = e.target;
-                let offsetX = e.clientX - bean.getBoundingClientRect().left;
-                let offsetY = e.clientY - bean.getBoundingClientRect().top;
-
-                socket.emit("beanTouched", index);
-
-                function onMouseMove(event) {
-                    mousePositions[socket.id] = { x: event.clientX, y: event.clientY };
-                    socket.emit("updateMousePosition", { id: socket.id, position: mousePositions[socket.id] });
-
-                    if (bean.classList.contains("glow")) {
-                        const positions = Object.values(mousePositions);
-                        if (positions.length === 2) {
-                            const midpoint = {
-                                x: (positions[0].x + positions[1].x) / 2,
-                                y: (positions[0].y + positions[1].y) / 2,
-                            };
-                            socket.emit("updateCursorMidpoint", { index, ...midpoint });
-                        }
-                    }
-                }
-
-                function onMouseUp() {
-                    document.removeEventListener("mousemove", onMouseMove);
-                    document.removeEventListener("mouseup", onMouseUp);
-
-                    // 右のお皿に豆が移動されたかどうかを確認
-                    const rightBowlRect = rightBowl.getBoundingClientRect();
-                    const beanRect = bean.getBoundingClientRect();
-                    if (
-                        beanRect.left > rightBowlRect.left &&
-                        beanRect.right < rightBowlRect.right &&
-                        beanRect.top > rightBowlRect.top &&
-                        beanRect.bottom < rightBowlRect.bottom
-                    ) {
-                        rightBowl.appendChild(bean);
-                        bean.style.position = "relative";
-                        bean.style.left = `${Math.random() * 100}px`;
-                        bean.style.top = `${Math.random() * 100}px`;
-                    }
-
-                    socket.emit("beanReleased", index);
-                }
-
-                document.addEventListener("mousemove", onMouseMove);
-                document.addEventListener("mouseup", onMouseUp);
-            }
 
             socket.on("updateCursorMidpoint", (data) => {
                 const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
@@ -147,6 +97,11 @@
             socket.on("beanStopGlow", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) bean.classList.remove("glow");
+            });
+
+            document.addEventListener("mousemove", (event) => {
+                mousePositions[socket.id] = { x: event.clientX, y: event.clientY };
+                socket.emit("updateMousePosition", mousePositions[socket.id]);
             });
         });
     </script>
