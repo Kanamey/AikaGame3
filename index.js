@@ -36,7 +36,7 @@ io.on("connection", (socket) => {
             beans[index].touchedBy.push(socket.id);
         }
 
-        // 二人が同時に触った場合に豆を光らせる
+        // 二人が同時に触っている場合に豆を光らせる
         if (beans[index].touchedBy.length === 2) {
             io.emit("beanGlow", index);
         }
@@ -46,8 +46,10 @@ io.on("connection", (socket) => {
     socket.on("beanReleased", (index) => {
         beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
 
-        // 光を止める
-        io.emit("beanStopGlow", index);
+        // 二人のタッチが解除された場合、光を止める
+        if (beans[index].touchedBy.length < 2) {
+            io.emit("beanStopGlow", index);
+        }
     });
 
     // 二人が同時に触っている間、豆を二人のカーソルの中点に移動させる
