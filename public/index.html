@@ -77,12 +77,11 @@
 
                     document.body.appendChild(bean);
 
-                    bean.addEventListener("mousedown", () => socket.emit("beanTouched", index));
+                    bean.addEventListener("mousedown", (e) => startDrag(e, socket, index));
                     bean.addEventListener("mouseup", () => socket.emit("beanReleased", index));
                 });
             });
 
-            
             function startDrag(e, socket, index) {
                 const bean = e.target;
                 let offsetX = e.clientX - bean.getBoundingClientRect().left;
@@ -121,6 +120,8 @@
                         bean.style.left = `${Math.random() * 100}px`;
                         bean.style.top = `${Math.random() * 100}px`;
                     }
+
+                    socket.emit("beanReleased", index);
                 }
 
                 document.addEventListener("mousemove", onMouseMove);
@@ -141,29 +142,14 @@
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
                     bean.classList.add("glow");
-
-                    const interval = setInterval(() => {
-                        if (mousePositions) {
-                            const positions = Object.values(mousePositions);
-                            if (positions.length === 2) {
-                                const x = (positions[0].x + positions[1].x) / 2;
-                                const y = (positions[0].y + positions[1].y) / 2;
-                                socket.emit("beanMoveToCenter", { index, position: { x, y } });
-                            }
-                        }
-                    }, 50);
-
-                    socket.once("beanStopGlow", () => {
-                        clearInterval(interval);
-                    });
                 }
             });
 
-            socket.on("beanMoveToCenter", (data) => {
-                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
+            // 二人のタッチが解除されたら光を止める
+            socket.on("beanStopGlow", (index) => {
+                const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
-                    bean.style.left = `${data.position.x}px`;
-                    bean.style.top = `${data.position.y}px`;
+                    bean.classList.remove("glow");
                 }
             });
         });
