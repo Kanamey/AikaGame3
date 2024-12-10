@@ -9,7 +9,7 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* スクロールバーが表示されないようにする */
+            overflow: hidden;
             box-sizing: border-box;
         }
         body {
@@ -45,11 +45,11 @@
             position: absolute;
             cursor: grab;
             box-sizing: border-box;
-            transition: background-color 0.3s; /* スムーズに色が変わる */
+            transition: background-color 0.3s;
         }
         .glow {
-            background-color: yellow; /* 光るときの色 */
-            box-shadow: 0 0 10px yellow; /* 発光の視覚効果 */
+            background-color: yellow;
+            box-shadow: 0 0 10px yellow;
         }
     </style>
 </head>
@@ -87,19 +87,22 @@
                 let offsetX = e.clientX - bean.getBoundingClientRect().left;
                 let offsetY = e.clientY - bean.getBoundingClientRect().top;
 
-                // サーバーに豆が触られたことを通知
                 socket.emit("beanTouched", index);
 
                 function onMouseMove(event) {
-                    bean.style.left = `${event.clientX - offsetX}px`;
-                    bean.style.top = `${event.clientY - offsetY}px`;
+                    mousePositions[socket.id] = { x: event.clientX, y: event.clientY };
+                    socket.emit("updateMousePosition", { id: socket.id, position: mousePositions[socket.id] });
 
-                    // 他のプレイヤーにも豆の移動情報を送信
-                    socket.emit("beanMoved", {
-                        index: bean.dataset.index,
-                        left: event.clientX - offsetX,
-                        top: event.clientY - offsetY,
-                    });
+                    if (bean.classList.contains("glow")) {
+                        const positions = Object.values(mousePositions);
+                        if (positions.length === 2) {
+                            const midpoint = {
+                                x: (positions[0].x + positions[1].x) / 2,
+                                y: (positions[0].y + positions[1].y) / 2,
+                            };
+                            socket.emit("updateCursorMidpoint", { index, ...midpoint });
+                        }
+                    }
                 }
 
                 function onMouseUp() {
@@ -128,29 +131,22 @@
                 document.addEventListener("mouseup", onMouseUp);
             }
 
-            // 他のクライアントからの豆の移動情報を受け取って更新
-            socket.on("beanMoved", (data) => {
+            socket.on("updateCursorMidpoint", (data) => {
                 const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
                 if (bean) {
-                    bean.style.left = `${data.left}px`;
-                    bean.style.top = `${data.top}px`;
+                    bean.style.left = `${data.x}px`;
+                    bean.style.top = `${data.y}px`;
                 }
             });
 
-            // 二人が同時に触った豆を光らせる
             socket.on("beanGlow", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
-                if (bean) {
-                    bean.classList.add("glow");
-                }
+                if (bean) bean.classList.add("glow");
             });
 
-            // 二人のタッチが解除されたら光を止める
             socket.on("beanStopGlow", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
-                if (bean) {
-                    bean.classList.remove("glow");
-                }
+                if (bean) bean.classList.remove("glow");
             });
         });
     </script>
