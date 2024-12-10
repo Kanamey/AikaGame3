@@ -45,6 +45,13 @@ io.on("connection", (socket) => {
         }
     });
 
+    // 二人が同時に触れている間、豆をカーソルの中点に移動
+    socket.on("updateCursorMidpoint", (data) => {
+        beans[data.index].left = data.x;
+        beans[data.index].top = data.y;
+        io.emit("updateCursorMidpoint", data); // 全クライアントに中点情報を送信
+    });
+
     // 豆が移動された時の処理
     socket.on("beanMoved", (data) => {
         beans[data.index].left = data.left;
