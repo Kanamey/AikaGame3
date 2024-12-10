@@ -39,9 +39,13 @@ io.on("connection", (socket) => {
     socket.on("beanReleased", (index) => {
         beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
 
-        // 二人のタッチが解除された場合、光を止める
+        // 二人のタッチが解除された場合
         if (beans[index].touchedBy.length < 2) {
             io.emit("beanStopGlow", index);
+
+            // 光が停止した豆を消滅させる
+            io.emit("beanDisappear", index);
+            beans.splice(index, 1); // サーバー側のリストから豆を削除
         }
     });
 
