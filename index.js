@@ -23,13 +23,6 @@ io.on("connection", (socket) => {
     // 初期状態の豆の位置情報を送信
     socket.emit("initializeBeans", beans);
 
-    // 他のプレイヤーが豆を移動したときの処理
-    socket.on("beanMoved", (data) => {
-        beans[data.index].left = data.left;
-        beans[data.index].top = data.top;
-        io.emit("beanMoved", data); // 全クライアントにブロードキャスト
-    });
-
     // 豆が触られた時の処理
     socket.on("beanTouched", (index) => {
         if (!beans[index].touchedBy.includes(socket.id)) {
@@ -52,12 +45,11 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 二人が同時に触っている間、豆を二人のカーソルの中点に移動させる
-    socket.on("beanMoveToCenter", (data) => {
-        const { index, position } = data;
-        beans[index].left = position.x;
-        beans[index].top = position.y;
-        io.emit("beanMoveToCenter", data);
+    // 豆が移動された時の処理
+    socket.on("beanMoved", (data) => {
+        beans[data.index].left = data.left;
+        beans[data.index].top = data.top;
+        io.emit("beanMoved", data); // 全クライアントにブロードキャスト
     });
 
     socket.on("disconnect", () => {
