@@ -50,6 +50,14 @@ io.on("connection", (socket) => {
         io.emit("beanStopGlow", index);
     });
 
+    // 二人が同時に触っている間、豆を二人のカーソルの中点に移動させる
+    socket.on("beanMoveToCenter", (data) => {
+        const { index, position } = data;
+        beans[index].left = position.x;
+        beans[index].top = position.y;
+        io.emit("beanMoveToCenter", data);
+    });
+
     socket.on("disconnect", () => {
         console.log("A user disconnected");
         beans.forEach(bean => {
