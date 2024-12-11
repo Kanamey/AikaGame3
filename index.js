@@ -1,19 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
   const socket = io();
-  let beans = []; // サーバーからの豆情報を保存
+  let beans = [];
 
-  // 初期豆の描画
+  // サーバーから初期豆の情報を受信
   socket.on("initializeBeans", (serverBeans) => {
       beans = serverBeans;
       renderBeans(beans);
   });
 
-  // 豆の位置更新を受信して画面を更新
-  socket.on("updateBeanPosition", ({ id, newX, newY }) => {
+  // サーバーから更新された豆の位置を受信
+  socket.on("updateBeanPosition", ({ id, x, y }) => {
       const bean = document.querySelector(`.bean[data-id="${id}"]`);
       if (bean) {
-          bean.style.left = `${newX}px`;
-          bean.style.top = `${newY}px`;
+          bean.style.left = `${x}px`;
+          bean.style.top = `${y}px`;
       }
   });
 
@@ -21,18 +21,37 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderBeans(beans) {
       const container = document.getElementById("game-container");
       container.innerHTML = ""; // 画面をクリア
-      beans.forEach(bean => {
+      beans.forEach((bean) => {
           const beanDiv = document.createElement("div");
           beanDiv.classList.add("bean");
           beanDiv.dataset.id = bean.id;
           beanDiv.style.left = `${bean.x}px`;
           beanDiv.style.top = `${bean.y}px`;
 
-          // 豆をクリックしたときにサーバーに移動リクエストを送信
-          beanDiv.addEventListener("mousedown", () => {
-              const newX = Math.random() * 500; // 新しい位置（例）
-              const newY = Math.random() * 500;
-              socket.emit("moveBean", { id: bean.id, newX, newY });
+          // 豆をクリックしたときにサーバーへ移動リクエストを送信
+          beanDiv.addEventListener("mousedown", (event) => {
+              const startX = event.clientX;
+              const startY = event.clientY;
+
+              const moveListener = (e) => {
+                  const x2 = e.clientX;
+                  const y2 = e.clientY;
+                  socket.emit("moveBean", {
+                      id: bean.id,
+                      x1: startX,
+                      y1: startY,
+                      x2,
+                      y2,
+                  });
+              };
+
+              const upListener = () => {
+                  document.removeEventListener("mousemove", moveListener);
+                  document.removeEventListener("mouseup", upListener);
+              };
+
+              document.addEventListener("mousemove", moveListener);
+              document.addEventListener("mouseup", upListener);
           });
 
           container.appendChild(beanDiv);
