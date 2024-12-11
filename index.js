@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 初期豆の描画
   socket.on("initializeBeans", (serverBeans) => {
+      console.log("Beans received:", serverBeans); // デバッグ用ログ
       beans = serverBeans;
       renderBeans(beans);
   });

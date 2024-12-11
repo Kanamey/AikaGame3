@@ -26,6 +26,7 @@ io.on("connection", (socket) => {
 
     // 初期豆のデータを送信
     socket.emit("initializeBeans", beans);
+    console.log("Beans initialized:", beans); // デバッグ用ログ
 
     // 豆の移動をサーバーで処理
     socket.on("moveBean", ({ id, x1, y1, x2, y2 }) => {
