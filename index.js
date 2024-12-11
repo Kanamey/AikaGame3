@@ -1,3 +1,4 @@
+// 二人が同時に推している間だけ光、それぞれ動かせる
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
@@ -13,7 +14,7 @@ for (let i = 0; i < 5; i++) {
     beans.push({
         left: Math.random() * 500,
         top: Math.random() * 500,
-        touchedBy: [] // プレイヤーIDを格納
+        touchedBy: [] // プレイヤーIDを格納する配列
     });
 }
 
@@ -29,8 +30,19 @@ io.on("connection", (socket) => {
             beans[index].touchedBy.push(socket.id);
         }
 
+        // 二人が同時に触っている場合に豆を光らせる
         if (beans[index].touchedBy.length === 2) {
             io.emit("beanGlow", index);
+        }
+    });
+
+    // 豆が離された時の処理
+    socket.on("beanReleased", (index) => {
+        beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
+
+        // 二人のタッチが解除された場合、光を止める
+        if (beans[index].touchedBy.length < 2) {
+            io.emit("beanStopGlow", index);
         }
     });
 
@@ -38,28 +50,15 @@ io.on("connection", (socket) => {
     socket.on("beanMoved", (data) => {
         beans[data.index].left = data.left;
         beans[data.index].top = data.top;
-        io.emit("beanMoved", data); // 全クライアントに通知
-    });
-
-    // 豆が離された時の処理
-    socket.on("beanReleased", (index) => {
-        beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
-
-        if (beans[index].touchedBy.length < 2) {
-            io.emit("beanStopGlow", index);
-        }
-    });
-
-    // カーソルの中点を計算して更新
-    socket.on("updateCursorMidpoint", (data) => {
-        beans[data.index].left = data.x;
-        beans[data.index].top = data.y;
-        io.emit("updateCursorMidpoint", data); // 全クライアントに送信
+        io.emit("beanMoved", data); // 全クライアントにブロードキャスト
     });
 
     socket.on("disconnect", () => {
+        console.log("A user disconnected");
         beans.forEach(bean => {
-            bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
+            if (bean) {
+                bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
+            }
         });
     });
 });
