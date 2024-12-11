@@ -76,39 +76,31 @@
 
                     beanDiv.addEventListener("mousedown", () => socket.emit("beanTouched", index));
                     beanDiv.addEventListener("mouseup", () => socket.emit("beanReleased", index));
+
+                    // ドラッグによる移動処理
+                    beanDiv.addEventListener("mousemove", (e) => {
+                        beanDiv.style.left = `${e.clientX}px`;
+                        beanDiv.style.top = `${e.clientY}px`;
+
+                        socket.emit("beanMoved", {
+                            index,
+                            left: e.clientX,
+                            top: e.clientY,
+                        });
+                    });
                 });
             });
 
-            document.addEventListener("mousemove", (event) => {
-                mousePositions[socket.id] = { x: event.clientX, y: event.clientY };
-                socket.emit("updateMousePosition", mousePositions[socket.id]);
-            });
-
-            // 豆が光った場合の処理
-            socket.on("beanGlow", (index) => {
-                const bean = document.querySelector(`.bean[data-index="${index}"]`);
+            // 他のクライアントからの豆の移動情報を反映
+            socket.on("beanMoved", (data) => {
+                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
                 if (bean) {
-                    bean.classList.add("glow");
-
-                    const interval = setInterval(() => {
-                        const positions = Object.values(mousePositions);
-                        if (positions.length === 2) {
-                            const midpoint = {
-                                x: (positions[0].x + positions[1].x) / 2,
-                                y: (positions[0].y + positions[1].y) / 2,
-                            };
-                            socket.emit("updateCursorMidpoint", { index, ...midpoint });
-                        }
-                    }, 50);
-
-                    socket.on("beanStopGlow", () => {
-                        clearInterval(interval);
-                        bean.classList.remove("glow");
-                    });
+                    bean.style.left = `${data.left}px`;
+                    bean.style.top = `${data.top}px`;
                 }
             });
 
-            // 中点情報を受け取って豆を移動
+            // 豆の中点移動を反映
             socket.on("updateCursorMidpoint", (data) => {
                 const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
                 if (bean) {
