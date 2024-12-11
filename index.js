@@ -34,6 +34,13 @@ io.on("connection", (socket) => {
         }
     });
 
+    // 豆が移動された時の処理
+    socket.on("beanMoved", (data) => {
+        beans[data.index].left = data.left;
+        beans[data.index].top = data.top;
+        io.emit("beanMoved", data); // 全クライアントに通知
+    });
+
     // 豆が離された時の処理
     socket.on("beanReleased", (index) => {
         beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
