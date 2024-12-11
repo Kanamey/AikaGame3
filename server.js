@@ -6,9 +6,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// `public` フォルダを静的ファイルとして提供
 app.use(express.static("public"));
 
-// 豆の初期位置データ
+// サーバーで管理する豆の初期位置
 let beans = [];
 for (let i = 0; i < 5; i++) {
     beans.push({
@@ -19,42 +20,40 @@ for (let i = 0; i < 5; i++) {
     });
 }
 
-// クライアントとの通信
+// ソケット通信の設定
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    // 初期豆の位置を送信
+    // 初期豆の情報をクライアントに送信
     socket.emit("initializeBeans", beans);
 
-    // クライアントからの豆移動リクエスト
+    // 豆が移動された場合の処理
     socket.on("moveBean", ({ id, newX, newY }) => {
         const bean = beans.find(b => b.id === id);
         if (bean) {
             bean.x = newX;
             bean.y = newY;
-            io.emit("updateBeanPosition", { id, newX, newY });
+            io.emit("updateBeanPosition", { id, newX, newY }); // 全クライアントに通知
         }
     });
 
-    // 豆の中点移動リクエスト
+    // 中点の計算リクエストを処理
     socket.on("updateMidpoint", ({ id, x1, y1, x2, y2 }) => {
         const bean = beans.find(b => b.id === id);
         if (bean) {
-            // 中点を計算
             bean.x = (x1 + x2) / 2;
             bean.y = (y1 + y2) / 2;
-
-            // 全クライアントに通知
-            io.emit("updateBeanPosition", { id, newX: bean.x, newY: bean.y });
+            io.emit("updateBeanPosition", { id, newX: bean.x, newY: bean.y }); // 全クライアントに通知
         }
     });
 
+    // クライアントが切断したとき
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
     });
 });
 
-// サーバー起動
+// サーバーをポート3000で起動
 server.listen(3000, () => {
     console.log("Server running on port 3000");
 });
