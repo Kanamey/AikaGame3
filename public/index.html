@@ -1,3 +1,4 @@
+<!-- 二人が同時に推している間だけ光、それぞれ動かせる -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -9,7 +10,7 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden; /* スクロールバーが表示されないようにする */
             box-sizing: border-box;
         }
         body {
@@ -45,17 +46,18 @@
             position: absolute;
             cursor: grab;
             box-sizing: border-box;
+            transition: background-color 0.3s; /* スムーズに色が変わる */
         }
         .glow {
-            background-color: yellow;
-            box-shadow: 0 0 10px yellow;
+            background-color: yellow; /* 光るときの色 */
+            box-shadow: 0 0 10px yellow; /* 発光の視覚効果 */
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="left-bowl" class="bowl"></div> <!-- 左のお皿 -->
-        <div id="right-bowl" class="bowl"></div> <!-- 右のお皿 -->
+        <div id="left-bowl" class="bowl"></div>
+        <div id="right-bowl" class="bowl"></div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -63,73 +65,92 @@
             const socket = io();
             const leftBowl = document.getElementById("left-bowl");
             const rightBowl = document.getElementById("right-bowl");
-            let mousePositions = {}; // 各プレイヤーのカーソル位置を記録
+            let mousePositions = {}; // 各プレイヤーのマウス位置を管理
 
-            // 初期豆の描画
+            // 初期豆の位置情報をサーバーから受け取って描画
             socket.on("initializeBeans", (beans) => {
-                beans.forEach((bean, index) => {
-                    const beanDiv = document.createElement("div");
-                    beanDiv.classList.add("bean");
-                    beanDiv.style.left = `${bean.left}px`;
-                    beanDiv.style.top = `${bean.top}px`;
-                    beanDiv.dataset.index = index;
+                beans.forEach((beanData, index) => {
+                    const bean = document.createElement("div");
+                    bean.classList.add("bean");
+                    bean.style.left = `${beanData.left}px`;
+                    bean.style.top = `${beanData.top}px`;
+                    bean.dataset.index = index;
 
-                    document.body.appendChild(beanDiv);
+                    document.body.appendChild(bean);
 
-                    // 豆が触られたイベントをサーバーに送信
-                    beanDiv.addEventListener("mousedown", () => socket.emit("beanTouched", index));
-
-                    // 豆が離されたイベントをサーバーに送信
-                    beanDiv.addEventListener("mouseup", () => socket.emit("beanReleased", index));
+                    bean.addEventListener("mousedown", (e) => startDrag(e, socket, index));
+                    bean.addEventListener("mouseup", () => socket.emit("beanReleased", index));
                 });
             });
 
-            // マウス移動時の位置情報をサーバーに送信
-            document.addEventListener("mousemove", (event) => {
-                mousePositions[socket.id] = { x: event.clientX, y: event.clientY };
-                socket.emit("updateMousePosition", mousePositions[socket.id]);
+            function startDrag(e, socket, index) {
+                const bean = e.target;
+                let offsetX = e.clientX - bean.getBoundingClientRect().left;
+                let offsetY = e.clientY - bean.getBoundingClientRect().top;
+
+                // サーバーに豆が触られたことを通知
+                socket.emit("beanTouched", index);
+
+                function onMouseMove(event) {
+                    bean.style.left = `${event.clientX - offsetX}px`;
+                    bean.style.top = `${event.clientY - offsetY}px`;
+
+                    // 他のプレイヤーにも豆の移動情報を送信
+                    socket.emit("beanMoved", {
+                        index: bean.dataset.index,
+                        left: event.clientX - offsetX,
+                        top: event.clientY - offsetY,
+                    });
+                }
+
+                function onMouseUp() {
+                    document.removeEventListener("mousemove", onMouseMove);
+                    document.removeEventListener("mouseup", onMouseUp);
+
+                    // 右のお皿に豆が移動されたかどうかを確認
+                    const rightBowlRect = rightBowl.getBoundingClientRect();
+                    const beanRect = bean.getBoundingClientRect();
+                    if (
+                        beanRect.left > rightBowlRect.left &&
+                        beanRect.right < rightBowlRect.right &&
+                        beanRect.top > rightBowlRect.top &&
+                        beanRect.bottom < rightBowlRect.bottom
+                    ) {
+                        rightBowl.appendChild(bean);
+                        bean.style.position = "relative";
+                        bean.style.left = `${Math.random() * 100}px`;
+                        bean.style.top = `${Math.random() * 100}px`;
+                    }
+
+                    socket.emit("beanReleased", index);
+                }
+
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+            }
+
+            // 他のクライアントからの豆の移動情報を受け取って更新
+            socket.on("beanMoved", (data) => {
+                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
+                if (bean) {
+                    bean.style.left = `${data.left}px`;
+                    bean.style.top = `${data.top}px`;
+                }
             });
 
-            // 豆が光ったときの処理
+            // 二人が同時に触った豆を光らせる
             socket.on("beanGlow", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
                     bean.classList.add("glow");
-
-                    // 中点の更新処理
-                    const interval = setInterval(() => {
-                        const positions = Object.values(mousePositions);
-                        if (positions.length === 2) {
-                            const midpoint = {
-                                x: (positions[0].x + positions[1].x) / 2,
-                                y: (positions[0].y + positions[1].y) / 2,
-                            };
-                            socket.emit("updateCursorMidpoint", { index, ...midpoint });
-                        }
-                    }, 50);
-
-                    // 豆の光が停止したときの処理
-                    socket.on("beanStopGlow", () => {
-                        clearInterval(interval);
-                        bean.classList.remove("glow");
-                    });
                 }
             });
 
-            // サーバーからの中点位置の更新を反映
-            socket.on("updateCursorMidpoint", (data) => {
-                const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
-                if (bean) {
-                    bean.style.left = `${data.x}px`;
-                    bean.style.top = `${data.y}px`;
-                }
-            });
-
-            // 豆が消えたときの処理
-            socket.on("beanDisappear", (index) => {
+            // 二人のタッチが解除されたら光を止める
+            socket.on("beanStopGlow", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
-                    bean.remove();
+                    bean.classList.remove("glow");
                 }
             });
         });
