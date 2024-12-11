@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const socket = io();
-  let beans = []; // 豆の情報を保存
+  let beans = []; // サーバーからの豆情報を保存
 
   // 初期豆の描画
   socket.on("initializeBeans", (serverBeans) => {
