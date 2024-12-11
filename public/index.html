@@ -45,7 +45,6 @@
             position: absolute;
             cursor: grab;
             box-sizing: border-box;
-            transition: background-color 0.3s;
         }
         .glow {
             background-color: yellow;
@@ -55,8 +54,8 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="left-bowl" class="bowl"></div>
-        <div id="right-bowl" class="bowl"></div>
+        <div id="left-bowl" class="bowl"></div> <!-- 左のお皿 -->
+        <div id="right-bowl" class="bowl"></div> <!-- 右のお皿 -->
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -64,33 +63,40 @@
             const socket = io();
             const leftBowl = document.getElementById("left-bowl");
             const rightBowl = document.getElementById("right-bowl");
-            let mousePositions = {}; // 各プレイヤーのマウス位置を管理
+            let mousePositions = {}; // 各プレイヤーのカーソル位置を記録
 
+            // 初期豆の描画
             socket.on("initializeBeans", (beans) => {
-                beans.forEach((beanData, index) => {
-                    const bean = document.createElement("div");
-                    bean.classList.add("bean");
-                    bean.style.left = `${beanData.left}px`;
-                    bean.style.top = `${beanData.top}px`;
-                    bean.dataset.index = index;
+                beans.forEach((bean, index) => {
+                    const beanDiv = document.createElement("div");
+                    beanDiv.classList.add("bean");
+                    beanDiv.style.left = `${bean.left}px`;
+                    beanDiv.style.top = `${bean.top}px`;
+                    beanDiv.dataset.index = index;
 
-                    document.body.appendChild(bean);
+                    document.body.appendChild(beanDiv);
 
-                    bean.addEventListener("mousedown", () => socket.emit("beanTouched", index));
-                    bean.addEventListener("mouseup", () => socket.emit("beanReleased", index));
+                    // 豆が触られたイベントをサーバーに送信
+                    beanDiv.addEventListener("mousedown", () => socket.emit("beanTouched", index));
+
+                    // 豆が離されたイベントをサーバーに送信
+                    beanDiv.addEventListener("mouseup", () => socket.emit("beanReleased", index));
                 });
             });
 
+            // マウス移動時の位置情報をサーバーに送信
             document.addEventListener("mousemove", (event) => {
                 mousePositions[socket.id] = { x: event.clientX, y: event.clientY };
                 socket.emit("updateMousePosition", mousePositions[socket.id]);
             });
 
+            // 豆が光ったときの処理
             socket.on("beanGlow", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
                     bean.classList.add("glow");
 
+                    // 中点の更新処理
                     const interval = setInterval(() => {
                         const positions = Object.values(mousePositions);
                         if (positions.length === 2) {
@@ -102,6 +108,7 @@
                         }
                     }, 50);
 
+                    // 豆の光が停止したときの処理
                     socket.on("beanStopGlow", () => {
                         clearInterval(interval);
                         bean.classList.remove("glow");
@@ -109,6 +116,7 @@
                 }
             });
 
+            // サーバーからの中点位置の更新を反映
             socket.on("updateCursorMidpoint", (data) => {
                 const bean = document.querySelector(`.bean[data-index="${data.index}"]`);
                 if (bean) {
@@ -117,6 +125,7 @@
                 }
             });
 
+            // 豆が消えたときの処理
             socket.on("beanDisappear", (index) => {
                 const bean = document.querySelector(`.bean[data-index="${index}"]`);
                 if (bean) {
