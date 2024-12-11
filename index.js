@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   const socket = io();
-  let beans = [];
+  let beans = []; // サーバーからの豆情報を保存
 
-  // サーバーから初期豆の情報を受信
+  // 初期豆の描画
   socket.on("initializeBeans", (serverBeans) => {
       beans = serverBeans;
       renderBeans(beans);
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
           beanDiv.style.left = `${bean.x}px`;
           beanDiv.style.top = `${bean.y}px`;
 
-          // 豆をクリックしたときにサーバーへ移動リクエストを送信
+          // ドラッグして移動する処理
           beanDiv.addEventListener("mousedown", (event) => {
               const startX = event.clientX;
               const startY = event.clientY;
