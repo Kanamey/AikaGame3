@@ -67,6 +67,8 @@ io.on("connection", (socket) => {
                 bean.isGlowing = true;
             }
             io.emit("updateBeans", beans);
+            console.log("Beans updated:", beans); // デバッグ用ログ
+
         }
     });
 
