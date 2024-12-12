@@ -8,28 +8,32 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// 左側のお皿の中心座標
-const leftBowlCenter = { x: 200, y: 300 }; // 適切な値を設定
-const leftBowlRadius = 75; // 半径
-
-// 豆の初期データ
+// 豆のデータ
 let beans = [];
-for (let i = 0; i < 5; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const distance = Math.random() * leftBowlRadius;
-    const x = leftBowlCenter.x + Math.cos(angle) * distance;
-    const y = leftBowlCenter.y + Math.sin(angle) * distance;
-    beans.push({
-        id: i,
-        x: x,
-        y: y,
-        isGlowing: false,
-        touchedBy: [],
-    });
-}
+const beanRadius = 15; // 豆の半径
+const leftBowlCenter = { x: 200, y: 300 }; // 左のお皿の中心
+const leftBowlRadius = 75; // 左のお皿の半径
 
-// プレイヤーのマウス座標
+// プレイヤーの位置情報
 let playerPositions = {};
+
+// 初期化処理
+function initializeBeans() {
+    beans = [];
+    for (let i = 0; i < 5; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * leftBowlRadius;
+        const x = leftBowlCenter.x + Math.cos(angle) * distance;
+        const y = leftBowlCenter.y + Math.sin(angle) * distance;
+        beans.push({
+            id: i,
+            x,
+            y,
+            isGlowing: false,
+            touchedBy: [],
+        });
+    }
+}
 
 // 静的ファイルを提供
 app.use(express.static("public"));
@@ -47,7 +51,7 @@ io.on("connection", (socket) => {
         playerPositions[socket.id] = position;
     });
 
-    // 豆が触られたことを受信
+    // 豆が触られたとき
     socket.on("touchBean", (beanId) => {
         const bean = beans.find((b) => b.id === beanId);
         if (bean) {
@@ -55,19 +59,18 @@ io.on("connection", (socket) => {
                 bean.touchedBy.push(socket.id);
             }
 
-            // 中点計算
+            // 中点計算と更新
             if (bean.touchedBy.length === 2) {
                 const [player1, player2] = bean.touchedBy.map((id) => playerPositions[id]);
                 bean.x = (player1.x + player2.x) / 2;
                 bean.y = (player1.y + player2.y) / 2;
                 bean.isGlowing = true;
-
-                io.emit("updateBean", bean);
             }
+            io.emit("updateBeans", beans);
         }
     });
 
-    // 豆がクリックから離されたとき
+    // 豆から手を離したとき
     socket.on("releaseBean", (beanId) => {
         const bean = beans.find((b) => b.id === beanId);
         if (bean) {
@@ -76,12 +79,11 @@ io.on("connection", (socket) => {
             if (bean.touchedBy.length < 2) {
                 bean.isGlowing = false;
             }
-
-            io.emit("updateBean", bean);
+            io.emit("updateBeans", beans);
         }
     });
 
-    // プレイヤーが切断したとき
+    // 切断時の処理
     socket.on("disconnect", () => {
         console.log(`Player disconnected: ${socket.id}`);
         delete playerPositions[socket.id];
@@ -93,11 +95,14 @@ io.on("connection", (socket) => {
             }
         });
 
-        io.emit("initializeBeans", beans);
+        io.emit("updateBeans", beans);
     });
 });
 
-// サーバーを起動
+// 初期化
+initializeBeans();
+
+// サーバーの起動
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
