@@ -1,53 +1,76 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-
+// server.js
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// `public` フォルダ内の静的ファイルを提供
-app.use(express.static("public"));
+app.use(express.static('public'));
 
-// 豆の初期位置をサーバーで管理
-let beans = [];
-for (let i = 0; i < 5; i++) {
-    beans.push({
-        id: i,
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-        touchedBy: [],
-    });
+let startTime = null;
+let pieceStartTimes = {};
+let gameCompleted = false;
+
+// 各ピースの初期状態 (例: 36ピースのデータを準備)
+let pieces = Array.from({ length: 36 }, (_, i) => ({
+    id: i,
+    isInCorrectPosition: false // 初期状態としてすべてfalse
+}));
+
+// 全ピースが正しい位置にあるか確認する関数
+function allPiecesInPlace() {
+    return pieces.every(piece => piece.isInCorrectPosition);
 }
 
-// ソケット通信の設定
-io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+// 接続処理
+io.on('connection', (socket) => {
+    console.log('A player connected:', socket.id);
 
-    // 初期豆のデータを送信
-    socket.emit("initializeBeans", beans);
-    console.log("Beans initialized:", beans); // デバッグ用ログ
-
-    // 豆の移動をサーバーで処理
-    socket.on("moveBean", ({ id, x1, y1, x2, y2 }) => {
-        const bean = beans.find((b) => b.id === id);
-        if (bean) {
-            // 中点を計算して豆の位置を更新
-            bean.x = (x1 + x2) / 2;
-            bean.y = (y1 + y2) / 2;
-
-            // 全クライアントに通知
-            io.emit("updateBeanPosition", { id, x: bean.x, y: bean.y });
-        }
+    socket.on('startGame', () => {
+        if (!startTime) startTime = Date.now();
+        io.emit('startGame');
     });
 
-    socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
+    socket.on('selectPiece', ({ pieceId, playerId }) => {
+        io.emit('pieceSelected', { pieceId, playerId });
+    });
+
+    socket.on('movePiece', ({ pieceId, x, y }) => {
+        io.emit('updatePiece', { pieceId, x, y });
+    });
+
+    socket.on('placePiece', ({ pieceId }) => {
+        if (!pieceStartTimes[pieceId]) pieceStartTimes[pieceId] = Date.now();
+        const timeHeld = Date.now() - pieceStartTimes[pieceId];
+        
+        // ピースが正しい位置に配置されたと仮定してマークする
+        const piece = pieces.find(p => p.id === pieceId);
+        if (piece) piece.isInCorrectPosition = true;
+
+        // CSVファイルにデータ出力
+        fs.appendFileSync('game_times.csv', `Piece ${pieceId},${timeHeld}\n`);
+        
+        // 完成確認
+        checkGameCompletion();
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Player disconnected:', socket.id);
     });
 });
 
-// サーバーをポート3000で起動
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// ゲームが終了したかどうかを確認する関数
+function checkGameCompletion() {
+    if (allPiecesInPlace()) {
+        gameCompleted = true;
+        const totalTime = Date.now() - startTime;
+        fs.appendFileSync('game_times.csv', `Total Time,${totalTime}\n`);
+        io.emit('gameComplete', { totalTime });
+    }
+}
+
+server.listen(4000, () => {
+    console.log('Server is running on port 4000');
 });

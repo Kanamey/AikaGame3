@@ -1,61 +1,69 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const socket = io();
-  let beans = []; // サーバーからの豆情報を保存
+// 二人が同時に推している間だけ光、それぞれ動かせる
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 
-  // 初期豆の描画
-  socket.on("initializeBeans", (serverBeans) => {
-      console.log("Beans received:", serverBeans); // デバッグ用ログ
-      beans = serverBeans;
-      renderBeans(beans);
-  });
+app.use(express.static("public"));
 
-  // サーバーから更新された豆の位置を受信
-  socket.on("updateBeanPosition", ({ id, x, y }) => {
-      const bean = document.querySelector(`.bean[data-id="${id}"]`);
-      if (bean) {
-          bean.style.left = `${x}px`;
-          bean.style.top = `${y}px`;
-      }
-  });
+// 初期豆の設定
+let beans = [];
+for (let i = 0; i < 5; i++) {
+    beans.push({
+        left: Math.random() * 500,
+        top: Math.random() * 500,
+        touchedBy: [] // プレイヤーIDを格納する配列
+    });
+}
 
-  // 豆の描画
-  function renderBeans(beans) {
-      const container = document.getElementById("game-container");
-      container.innerHTML = ""; // 画面をクリア
-      beans.forEach((bean) => {
-          const beanDiv = document.createElement("div");
-          beanDiv.classList.add("bean");
-          beanDiv.dataset.id = bean.id;
-          beanDiv.style.left = `${bean.x}px`;
-          beanDiv.style.top = `${bean.y}px`;
+io.on("connection", (socket) => {
+    console.log("A user connected");
 
-          // ドラッグして移動する処理
-          beanDiv.addEventListener("mousedown", (event) => {
-              const startX = event.clientX;
-              const startY = event.clientY;
+    // 初期状態の豆の位置情報を送信
+    socket.emit("initializeBeans", beans);
 
-              const moveListener = (e) => {
-                  const x2 = e.clientX;
-                  const y2 = e.clientY;
-                  socket.emit("moveBean", {
-                      id: bean.id,
-                      x1: startX,
-                      y1: startY,
-                      x2,
-                      y2,
-                  });
-              };
+    // 豆が触られた時の処理
+    socket.on("beanTouched", (index) => {
+        if (!beans[index].touchedBy.includes(socket.id)) {
+            beans[index].touchedBy.push(socket.id);
+        }
 
-              const upListener = () => {
-                  document.removeEventListener("mousemove", moveListener);
-                  document.removeEventListener("mouseup", upListener);
-              };
+        // 二人が同時に触っている場合に豆を光らせる
+        if (beans[index].touchedBy.length === 2) {
+            io.emit("beanGlow", index);
+        }
+    });
 
-              document.addEventListener("mousemove", moveListener);
-              document.addEventListener("mouseup", upListener);
-          });
+    // 豆が離された時の処理
+    socket.on("beanReleased", (index) => {
+        beans[index].touchedBy = beans[index].touchedBy.filter(id => id !== socket.id);
 
-          container.appendChild(beanDiv);
-      });
-  }
+        // 二人のタッチが解除された場合、光を止める
+        if (beans[index].touchedBy.length < 2) {
+            io.emit("beanStopGlow", index);
+        }
+    });
+
+    // 豆が移動された時の処理
+    socket.on("beanMoved", (data) => {
+        beans[data.index].left = data.left;
+        beans[data.index].top = data.top;
+        io.emit("beanMoved", data); // 全クライアントにブロードキャスト
+    });
+
+    socket.on("disconnect", () => {
+        console.log("A user disconnected");
+        beans.forEach(bean => {
+            if (bean) {
+                bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
+            }
+        });
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
