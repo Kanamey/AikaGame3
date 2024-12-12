@@ -18,6 +18,22 @@
       height: 100%;
       position: relative;
     }
+    .bowl {
+      width: 150px;
+      height: 150px;
+      border: 2px solid black;
+      border-radius: 50%;
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+    #left-bowl {
+      left: 20%;
+      top: 50%;
+    }
+    #right-bowl {
+      right: 20%;
+      top: 50%;
+    }
     .bean {
       width: 30px;
       height: 30px;
@@ -33,14 +49,17 @@
   </style>
 </head>
 <body>
-  <div id="game-container"></div>
+  <div id="game-container">
+    <div id="left-bowl" class="bowl"></div>
+    <div id="right-bowl" class="bowl"></div>
+  </div>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
 
-    // 豆を初期化
+    // 初期豆データを描画
     socket.on("initializeBeans", (serverBeans) => {
         beans = serverBeans;
         renderBeans();
@@ -82,7 +101,7 @@
         });
     }
 
-    // マウス移動で位置をサーバーに送信
+    // マウス移動でサーバーに位置を送信
     document.addEventListener("mousemove", (e) => {
         socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
     });
