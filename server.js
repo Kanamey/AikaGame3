@@ -1,76 +1,95 @@
-// server.js
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const fs = require('fs');
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static('public'));
+const PORT = process.env.PORT || 3000;
 
-let startTime = null;
-let pieceStartTimes = {};
-let gameCompleted = false;
+let players = {}; // 各プレイヤーのマウス座標を保存
+let beans = []; // 豆のデータを管理
 
-// 各ピースの初期状態 (例: 36ピースのデータを準備)
-let pieces = Array.from({ length: 36 }, (_, i) => ({
-    id: i,
-    isInCorrectPosition: false // 初期状態としてすべてfalse
-}));
-
-// 全ピースが正しい位置にあるか確認する関数
-function allPiecesInPlace() {
-    return pieces.every(piece => piece.isInCorrectPosition);
+// 初期豆の設定
+for (let i = 0; i < 5; i++) {
+    beans.push({
+        id: i,
+        x: Math.random() * 500,
+        y: Math.random() * 500,
+        isGlowing: false, // 光っているかどうか
+        touchedBy: [], // 現在触っているプレイヤーのID
+    });
 }
 
-// 接続処理
-io.on('connection', (socket) => {
-    console.log('A player connected:', socket.id);
+// 静的ファイルの提供
+app.use(express.static("public"));
 
-    socket.on('startGame', () => {
-        if (!startTime) startTime = Date.now();
-        io.emit('startGame');
+// ソケット通信の設定
+io.on("connection", (socket) => {
+    console.log("A user connected:", socket.id);
+
+    // プレイヤーを初期化
+    players[socket.id] = { x: 0, y: 0 };
+
+    // 初期豆データを送信
+    socket.emit("initializeBeans", beans);
+
+    // プレイヤーのマウス座標を更新
+    socket.on("updateMousePosition", (position) => {
+        players[socket.id] = position;
     });
 
-    socket.on('selectPiece', ({ pieceId, playerId }) => {
-        io.emit('pieceSelected', { pieceId, playerId });
+    // 豆がクリックされたとき
+    socket.on("touchBean", (beanId) => {
+        const bean = beans.find((b) => b.id === beanId);
+        if (bean) {
+            if (!bean.touchedBy.includes(socket.id)) {
+                bean.touchedBy.push(socket.id);
+            }
+
+            if (bean.touchedBy.length === 2) {
+                bean.isGlowing = true;
+
+                // 二人の中点を計算
+                const [player1, player2] = bean.touchedBy.map((id) => players[id]);
+                bean.x = (player1.x + player2.x) / 2;
+                bean.y = (player1.y + player2.y) / 2;
+
+                io.emit("updateBean", bean);
+            }
+        }
     });
 
-    socket.on('movePiece', ({ pieceId, x, y }) => {
-        io.emit('updatePiece', { pieceId, x, y });
+    // 豆がクリックから離れたとき
+    socket.on("releaseBean", (beanId) => {
+        const bean = beans.find((b) => b.id === beanId);
+        if (bean) {
+            bean.touchedBy = bean.touchedBy.filter((id) => id !== socket.id);
+
+            if (bean.touchedBy.length < 2) {
+                bean.isGlowing = false;
+            }
+
+            io.emit("updateBean", bean);
+        }
     });
 
-    socket.on('placePiece', ({ pieceId }) => {
-        if (!pieceStartTimes[pieceId]) pieceStartTimes[pieceId] = Date.now();
-        const timeHeld = Date.now() - pieceStartTimes[pieceId];
-        
-        // ピースが正しい位置に配置されたと仮定してマークする
-        const piece = pieces.find(p => p.id === pieceId);
-        if (piece) piece.isInCorrectPosition = true;
+    // 切断時の処理
+    socket.on("disconnect", () => {
+        console.log("A user disconnected:", socket.id);
+        delete players[socket.id];
 
-        // CSVファイルにデータ出力
-        fs.appendFileSync('game_times.csv', `Piece ${pieceId},${timeHeld}\n`);
-        
-        // 完成確認
-        checkGameCompletion();
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Player disconnected:', socket.id);
+        beans.forEach((bean) => {
+            bean.touchedBy = bean.touchedBy.filter((id) => id !== socket.id);
+            if (bean.touchedBy.length < 2) {
+                bean.isGlowing = false;
+            }
+        });
     });
 });
 
-// ゲームが終了したかどうかを確認する関数
-function checkGameCompletion() {
-    if (allPiecesInPlace()) {
-        gameCompleted = true;
-        const totalTime = Date.now() - startTime;
-        fs.appendFileSync('game_times.csv', `Total Time,${totalTime}\n`);
-        io.emit('gameComplete', { totalTime });
-    }
-}
-
-server.listen(4000, () => {
-    console.log('Server is running on port 4000');
+// サーバーの起動
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
