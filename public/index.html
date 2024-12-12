@@ -68,17 +68,9 @@
     });
 
     // 豆の更新情報を受信
-    socket.on("updateBean", (bean) => {
-        const beanElement = document.querySelector(`.bean[data-id="${bean.id}"]`);
-        if (beanElement) {
-            beanElement.style.left = `${bean.x}px`;
-            beanElement.style.top = `${bean.y}px`;
-            if (bean.isGlowing) {
-                beanElement.classList.add("glow");
-            } else {
-                beanElement.classList.remove("glow");
-            }
-        }
+    socket.on("updateBeans", (serverBeans) => {
+        beans = serverBeans;
+        renderBeans();
     });
 
     // 豆を描画
@@ -90,6 +82,12 @@
             beanElement.dataset.id = bean.id;
             beanElement.style.left = `${bean.x}px`;
             beanElement.style.top = `${bean.y}px`;
+
+            if (bean.isGlowing) {
+                beanElement.classList.add("glow");
+            } else {
+                beanElement.classList.remove("glow");
+            }
 
             beanElement.addEventListener("mousedown", () => {
                 socket.emit("touchBean", bean.id);
@@ -103,7 +101,7 @@
         });
     }
 
-    // マウス移動でサーバーに位置を送信
+    // マウス移動位置をサーバーに送信
     document.addEventListener("mousemove", (e) => {
         socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
     });
