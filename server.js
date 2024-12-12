@@ -8,13 +8,21 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
+// 左側のお皿の中心座標
+const leftBowlCenter = { x: 200, y: 300 }; // 適切な値を設定
+const leftBowlRadius = 75; // 半径
+
 // 豆の初期データ
 let beans = [];
 for (let i = 0; i < 5; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * leftBowlRadius;
+    const x = leftBowlCenter.x + Math.cos(angle) * distance;
+    const y = leftBowlCenter.y + Math.sin(angle) * distance;
     beans.push({
         id: i,
-        x: Math.random() * 500,
-        y: Math.random() * 500,
+        x: x,
+        y: y,
         isGlowing: false,
         touchedBy: [],
     });
