@@ -63,20 +63,25 @@
 
     // 初期豆データを描画
     socket.on("initializeBeans", (serverBeans) => {
+        console.log("Beans received:", serverBeans); // デバッグ用ログ
         beans = serverBeans;
         renderBeans();
     });
 
+
     // 豆の更新情報を受信
     socket.on("updateBeans", (serverBeans) => {
+        console.log("Beans updated on client:", serverBeans); // デバッグ用ログ
         beans = serverBeans;
         renderBeans();
     });
+
 
     // 豆を描画
     function renderBeans() {
         container.innerHTML = "";
         beans.forEach((bean) => {
+            console.log("Rendering bean:", bean); // デバッグ用ログ
             const beanElement = document.createElement("div");
             beanElement.classList.add("bean");
             beanElement.dataset.id = bean.id;
