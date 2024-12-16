@@ -10,9 +10,9 @@ const PORT = process.env.PORT || 3000;
 
 // 豆のデータ
 let beans = [];
-const beanRadius = 15;
-const leftBowlCenter = { x: 200, y: 300 };
-const leftBowlRadius = 75;
+const beanRadius = 15; // 豆の半径
+const leftBowlCenter = { x: 200, y: 300 }; // 左のお皿の中心
+const leftBowlRadius = 75; // 左のお皿の半径
 
 // プレイヤーの位置情報
 let playerPositions = {};
