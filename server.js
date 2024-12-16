@@ -33,6 +33,7 @@ function initializeBeans() {
             touchedBy: [],
         });
     }
+    console.log("Beans initialized:", beans);
 }
 
 // 静的ファイルを提供
