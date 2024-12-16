@@ -61,6 +61,11 @@
     const container = document.getElementById("game-container");
     let beans = [];
 
+    // クライアント接続確認
+    socket.on("connect", () => {
+        console.log("Connected to server!");
+    });
+
     // 初期豆データを描画
     socket.on("initializeBeans", (serverBeans) => {
         console.log("Beans initialized:", serverBeans);
@@ -81,6 +86,7 @@
 
         beans.forEach((bean) => {
             const beanElement = document.createElement("div");
+            console.log(`Rendering Bean ${bean.id} at (${bean.x}, ${bean.y})`);
             beanElement.classList.add("bean");
             beanElement.dataset.id = bean.id;
             beanElement.style.left = `${bean.x}px`;
@@ -91,10 +97,12 @@
             }
 
             beanElement.addEventListener("mousedown", () => {
+                console.log(`Bean ${bean.id} clicked`);
                 socket.emit("touchBean", bean.id);
             });
 
             beanElement.addEventListener("mouseup", () => {
+                console.log(`Bean ${bean.id} released`);
                 socket.emit("releaseBean", bean.id);
             });
 
