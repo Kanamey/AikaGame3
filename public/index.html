@@ -63,20 +63,21 @@
 
     // 初期豆データを描画
     socket.on("initializeBeans", (serverBeans) => {
+        console.log("Beans initialized:", serverBeans);
         beans = serverBeans;
         renderBeans();
     });
 
     // 豆の更新情報を受信
     socket.on("updateBeans", (serverBeans) => {
+        console.log("Beans updated:", serverBeans);
         beans = serverBeans;
         renderBeans();
     });
 
     // 豆を描画
     function renderBeans() {
-        const existingBeans = document.querySelectorAll(".bean");
-        existingBeans.forEach((bean) => bean.remove()); // 豆だけを削除
+        document.querySelectorAll(".bean").forEach((bean) => bean.remove());
 
         beans.forEach((bean) => {
             const beanElement = document.createElement("div");
@@ -87,8 +88,6 @@
 
             if (bean.isGlowing) {
                 beanElement.classList.add("glow");
-            } else {
-                beanElement.classList.remove("glow");
             }
 
             beanElement.addEventListener("mousedown", () => {
