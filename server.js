@@ -10,9 +10,9 @@ const PORT = process.env.PORT || 3000;
 
 // 豆のデータ
 let beans = [];
-const beanRadius = 15; // 豆の半径
-const leftBowlCenter = { x: 200, y: 300 }; // 左のお皿の中心
-const leftBowlRadius = 75; // 左のお皿の半径
+const beanRadius = 15;
+const leftBowlCenter = { x: 200, y: 300 };
+const leftBowlRadius = 75;
 
 // プレイヤーの位置情報
 let playerPositions = {};
@@ -49,10 +49,12 @@ io.on("connection", (socket) => {
     // マウス位置の更新を受信
     socket.on("updateMousePosition", (position) => {
         playerPositions[socket.id] = position;
+        console.log(`Player ${socket.id} position updated:`, position);
     });
 
     // 豆が触られたとき
     socket.on("touchBean", (beanId) => {
+        console.log(`Bean ${beanId} touched by ${socket.id}`);
         const bean = beans.find((b) => b.id === beanId);
         if (bean) {
             if (!bean.touchedBy.includes(socket.id)) {
@@ -65,6 +67,7 @@ io.on("connection", (socket) => {
                 bean.x = (player1.x + player2.x) / 2;
                 bean.y = (player1.y + player2.y) / 2;
                 bean.isGlowing = true;
+                console.log(`Bean ${beanId} glowing at midpoint:`, { x: bean.x, y: bean.y });
             }
             io.emit("updateBeans", beans);
         }
@@ -72,6 +75,7 @@ io.on("connection", (socket) => {
 
     // 豆から手を離したとき
     socket.on("releaseBean", (beanId) => {
+        console.log(`Bean ${beanId} released by ${socket.id}`);
         const bean = beans.find((b) => b.id === beanId);
         if (bean) {
             bean.touchedBy = bean.touchedBy.filter((id) => id !== socket.id);
