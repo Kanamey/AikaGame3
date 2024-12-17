@@ -54,9 +54,8 @@
 </head>
 <body>
   <div id="game-container">
-    <!-- 左側のお皿 -->
+    <!-- お皿の描画 -->
     <div id="left-bowl" class="bowl"></div>
-    <!-- 右側のお皿 -->
     <div id="right-bowl" class="bowl"></div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
@@ -65,54 +64,49 @@
     const container = document.getElementById("game-container");
     let beans = [];
 
-    // 初期豆データを受信
+    // マウスの動きをサーバーに送信
+    document.addEventListener("mousemove", (e) => {
+        socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
+    });
+
+    // 初期豆データ受信
     socket.on("initializeBeans", (serverBeans) => {
-        console.log("Beans initialized:", serverBeans);
         beans = serverBeans;
         renderBeans();
     });
 
-    // 豆の描画
+    // 豆の状態更新を受信
+    socket.on("updateBeans", (serverBeans) => {
+        beans = serverBeans;
+        renderBeans();
+    });
+
     function renderBeans() {
+        // 既存の豆要素のみを削除
         document.querySelectorAll(".bean").forEach((bean) => bean.remove());
-        beans.forEach((bean, index) => {
+
+        beans.forEach((bean) => {
             const beanElement = document.createElement("div");
             beanElement.classList.add("bean");
             beanElement.style.left = `${bean.left}px`;
             beanElement.style.top = `${bean.top}px`;
-            beanElement.dataset.index = index;
 
-            // イベントリスナー追加
+            if (bean.isGlowing) {
+                beanElement.classList.add("glow");
+            }
+
+            // 豆のクリックイベント
             beanElement.addEventListener("mousedown", () => {
-                console.log(`Mouse down on Bean ${index}`);
-                socket.emit("beanTouched", index);
+                socket.emit("beanTouched", bean.id);
             });
 
             beanElement.addEventListener("mouseup", () => {
-                console.log(`Mouse up on Bean ${index}`);
-                socket.emit("beanReleased", index);
+                socket.emit("beanReleased", bean.id);
             });
 
             container.appendChild(beanElement);
         });
     }
-
-    socket.on("beanMoved", (data) => {
-        console.log("Bean moved:", data);
-        beans[data.index].left = data.left;
-        beans[data.index].top = data.top;
-        renderBeans();
-    });
-
-    socket.on("beanGlow", (index) => {
-        console.log(`Bean ${index} glowing`);
-        document.querySelector(`.bean[data-index='${index}']`).style.backgroundColor = "yellow";
-    });
-
-    socket.on("beanStopGlow", (index) => {
-        console.log(`Bean ${index} stopped glowing`);
-        document.querySelector(`.bean[data-index='${index}']`).style.backgroundColor = "brown";
-    });
   </script>
 </body>
 </html>
