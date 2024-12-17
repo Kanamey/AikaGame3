@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-app.use(express.static("public"));
+app.use(express.static("public")); // publicフォルダ内の静的ファイルを提供
 
 const beans = []; // 豆データを格納する配列
 const players = {}; // 各プレイヤーの位置情報
@@ -29,29 +29,33 @@ io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
 
-    socket.emit("initializeBeans", beans);
+    socket.emit("initializeBeans", beans); // 初期豆データ送信
 
+    // クライアントからマウス位置の更新
     socket.on("updateMousePosition", (position) => {
         players[socket.id] = position;
+        console.log(`Player ${socket.id} position updated:`, position);
     });
 
+    // 豆がクリックされたとき
     socket.on("beanTouched", (beanId) => {
         console.log(`Received beanTouched for beanId: ${beanId}`);
 
-        // デバッグ: beans配列の状態を確認
-        console.log("Current beans array:", beans);
+        // 豆の取得をfindで行う
+        const bean = beans.find(b => b.id === beanId);
 
-        // 豆が存在するかバリデーション
-        const bean = beans.find((b) => b.id === beanId);
+        // 豆が存在しない場合のエラーハンドリング
         if (!bean) {
             console.error(`Error: Bean with id ${beanId} does not exist.`);
-            return; // 存在しない場合は中断
+            return;
         }
 
+        // プレイヤーIDを追加
         if (!bean.touchedBy.includes(socket.id)) {
             bean.touchedBy.push(socket.id);
         }
 
+        // 2人のプレイヤーがクリックしている場合、中点計算
         if (bean.touchedBy.length === 2) {
             const p1 = players[bean.touchedBy[0]];
             const p2 = players[bean.touchedBy[1]];
@@ -65,18 +69,22 @@ io.on("connection", (socket) => {
             }
         }
 
+        // クライアントに豆の更新データを送信
         io.emit("updateBeans", beans);
     });
 
+    // 豆が離されたとき
     socket.on("beanReleased", (beanId) => {
-        console.log(`Bean released for beanId: ${beanId}`);
+        console.log(`Received beanReleased for beanId: ${beanId}`);
 
-        const bean = beans.find((b) => b.id === beanId);
+        const bean = beans.find(b => b.id === beanId);
+
         if (!bean) {
             console.error(`Error: Bean with id ${beanId} does not exist.`);
-            return; // 存在しない場合は中断
+            return;
         }
 
+        // プレイヤーIDを削除し、光を解除
         bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
         if (bean.touchedBy.length < 2) {
             bean.isGlowing = false;
@@ -85,10 +93,12 @@ io.on("connection", (socket) => {
         io.emit("updateBeans", beans);
     });
 
+    // プレイヤーが切断したとき
     socket.on("disconnect", () => {
         console.log(`Player disconnected: ${socket.id}`);
         delete players[socket.id];
 
+        // 切断したプレイヤーが触っていた豆を解除
         beans.forEach(bean => {
             bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
             if (bean.touchedBy.length < 2) bean.isGlowing = false;
