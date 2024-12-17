@@ -40,35 +40,41 @@ io.on("connection", (socket) => {
     socket.on("beanTouched", (beanId) => {
         const bean = beans.find(b => b.id === beanId);
         if (!bean) return;
-
+    
         if (!bean.touchedBy.includes(socket.id)) {
             bean.touchedBy.push(socket.id);
         }
-
+    
         if (bean.touchedBy.length === 2) {
             const p1 = players[bean.touchedBy[0]];
             const p2 = players[bean.touchedBy[1]];
-
+    
             if (p1 && p2) {
                 bean.left = (p1.x + p2.x) / 2;
                 bean.top = (p1.y + p2.y) / 2;
                 bean.isGlowing = true;
+    
+                io.emit("beanMoved", { id: bean.id, left: bean.left, top: bean.top });
+                io.emit("beanGlow", bean.id);
             }
         }
-
+    
         io.emit("updateBeans", beans);
     });
-
-    // 豆が離された時
+    
     socket.on("beanReleased", (beanId) => {
         const bean = beans.find(b => b.id === beanId);
         if (!bean) return;
-
+    
         bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
-        if (bean.touchedBy.length < 2) bean.isGlowing = false;
-
+        if (bean.touchedBy.length < 2) {
+            bean.isGlowing = false;
+            io.emit("beanStopGlow", bean.id);
+        }
+    
         io.emit("updateBeans", beans);
     });
+    
 
     // プレイヤー切断時
     socket.on("disconnect", () => {
