@@ -15,7 +15,7 @@ const players = {}; // 各プレイヤーの位置情報
 function initializeBeans() {
     for (let i = 0; i < 5; i++) {
         beans.push({
-            id: i,
+            id: i, // 豆のID
             left: 200 + Math.random() * 100, // 初期X座標
             top: 300 + Math.random() * 100,  // 初期Y座標
             touchedBy: [], // クリックしたプレイヤーID
@@ -36,14 +36,16 @@ io.on("connection", (socket) => {
     });
 
     socket.on("beanTouched", (beanId) => {
-        // デバッグ: 受け取ったbeanIdの確認
         console.log(`Received beanTouched for beanId: ${beanId}`);
 
-        // 豆が存在するか確認する
+        // デバッグ: beans配列の状態を確認
+        console.log("Current beans array:", beans);
+
+        // 豆が存在するかバリデーション
         const bean = beans.find((b) => b.id === beanId);
         if (!bean) {
             console.error(`Error: Bean with id ${beanId} does not exist.`);
-            return; // エラー処理で中断
+            return; // 存在しない場合は中断
         }
 
         if (!bean.touchedBy.includes(socket.id)) {
@@ -72,7 +74,7 @@ io.on("connection", (socket) => {
         const bean = beans.find((b) => b.id === beanId);
         if (!bean) {
             console.error(`Error: Bean with id ${beanId} does not exist.`);
-            return; // エラー処理で中断
+            return; // 存在しない場合は中断
         }
 
         bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
