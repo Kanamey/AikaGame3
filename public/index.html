@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>豆移しゲーム</title>
   <style>
-    /* 全体のスタイル */
     body {
       margin: 0;
       display: flex;
@@ -23,7 +22,6 @@
       background-color: white;
     }
 
-    /* お皿のスタイル */
     .bowl {
       width: 150px;
       height: 150px;
@@ -45,7 +43,6 @@
       background-color: lightgreen;
     }
 
-    /* 豆のスタイル */
     .bean {
       width: 30px;
       height: 30px;
@@ -63,7 +60,6 @@
 </head>
 <body>
   <div id="game-container">
-    <!-- お皿の描画 -->
     <div id="left-bowl" class="bowl"></div>
     <div id="right-bowl" class="bowl"></div>
   </div>
@@ -73,23 +69,22 @@
     const container = document.getElementById("game-container");
     let beans = [];
 
-    // マウスの動きを送信
     document.addEventListener("mousemove", (e) => {
       socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
     });
 
-    // 豆データを受信して描画
     socket.on("initializeBeans", (serverBeans) => {
       beans = serverBeans;
+      console.log("Beans received from server:", beans);
       renderBeans();
     });
 
     socket.on("updateBeans", (serverBeans) => {
       beans = serverBeans;
+      console.log("Beans updated from server:", beans);
       renderBeans();
     });
 
-    // 豆を描画する関数
     function renderBeans() {
       document.querySelectorAll(".bean").forEach(bean => bean.remove());
       beans.forEach(bean => {
