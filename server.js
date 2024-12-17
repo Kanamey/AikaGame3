@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-app.use(express.static("public"));
+app.use(express.static("public")); // publicフォルダ内の静的ファイルを提供
 
 const beans = []; // 豆データを格納する配列
 const players = {}; // 各プレイヤーの位置情報
@@ -22,13 +22,14 @@ function initializeBeans() {
             isGlowing: false
         });
     }
-    console.log("Beans initialized:", beans); // デバッグ: 初期化された豆のデータを表示
+    console.log("Beans initialized successfully:", beans); // 初期化時にbeans配列を表示
 }
 
 io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
 
+    // 初期豆データ送信
     socket.emit("initializeBeans", beans);
 
     // マウス位置の更新
@@ -39,11 +40,11 @@ io.on("connection", (socket) => {
 
     // 豆がクリックされた時
     socket.on("beanTouched", (beanId) => {
-        console.log(`Received beanTouched event for beanId: ${beanId}`); // デバッグ: 受信したbeanIdを表示
+        console.log(`Received beanTouched event for beanId: ${beanId}`); // デバッグ: 受け取ったbeanIdを表示
         console.log("Current beans array:", beans); // デバッグ: 現在のbeans配列を表示
 
-        // 豆の存在確認
-        const bean = beans.find((b) => b.id === beanId);
+        // データの存在確認
+        const bean = beans.find(b => b.id === beanId);
         if (!bean) {
             console.error(`Error: Bean with id ${beanId} does not exist.`);
             return;
@@ -62,7 +63,7 @@ io.on("connection", (socket) => {
                 bean.top = (p1.y + p2.y) / 2;
                 bean.isGlowing = true;
 
-                console.log(`Bean ${beanId} midpoint: (${bean.left}, ${bean.top})`); // デバッグ: 中点計算結果
+                console.log(`Bean ${beanId} midpoint calculated: (${bean.left}, ${bean.top})`);
             }
         }
 
@@ -71,9 +72,9 @@ io.on("connection", (socket) => {
 
     // 豆が離された時
     socket.on("beanReleased", (beanId) => {
-        console.log(`Received beanReleased for beanId: ${beanId}`);
+        console.log(`Received beanReleased for beanId: ${beanId}`); // デバッグ: 解放されたbeanIdを表示
 
-        const bean = beans.find((b) => b.id === beanId);
+        const bean = beans.find(b => b.id === beanId);
         if (!bean) {
             console.error(`Error: Bean with id ${beanId} does not exist.`);
             return;
@@ -87,6 +88,7 @@ io.on("connection", (socket) => {
         io.emit("updateBeans", beans);
     });
 
+    // プレイヤーが切断した時
     socket.on("disconnect", () => {
         console.log(`Player disconnected: ${socket.id}`);
         delete players[socket.id];
