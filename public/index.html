@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>豆移しゲーム</title>
   <style>
+    /* 全体のスタイル */
     body {
       margin: 0;
       display: flex;
@@ -13,6 +14,7 @@
       height: 100vh;
       background-color: #f0f0f0;
     }
+
     #game-container {
       width: 80%;
       height: 80%;
@@ -20,6 +22,8 @@
       border: 2px solid black;
       background-color: white;
     }
+
+    /* お皿のスタイル */
     .bowl {
       width: 150px;
       height: 150px;
@@ -28,16 +32,20 @@
       position: absolute;
       transform: translate(-50%, -50%);
     }
+
     #left-bowl {
       left: 10%;
       top: 50%;
       background-color: lightblue;
     }
+
     #right-bowl {
       right: 10%;
       top: 50%;
       background-color: lightgreen;
     }
+
+    /* 豆のスタイル */
     .bean {
       width: 30px;
       height: 30px;
@@ -46,6 +54,7 @@
       position: absolute;
       transform: translate(-50%, -50%);
     }
+
     .glow {
       background-color: yellow;
       box-shadow: 0 0 10px yellow;
@@ -64,48 +73,45 @@
     const container = document.getElementById("game-container");
     let beans = [];
 
-    // マウスの動きをサーバーに送信
+    // マウスの動きを送信
     document.addEventListener("mousemove", (e) => {
-        socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
+      socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
     });
 
-    // 初期豆データ受信
+    // 豆データを受信して描画
     socket.on("initializeBeans", (serverBeans) => {
-        beans = serverBeans;
-        renderBeans();
+      beans = serverBeans;
+      renderBeans();
     });
 
-    // 豆の状態更新を受信
     socket.on("updateBeans", (serverBeans) => {
-        beans = serverBeans;
-        renderBeans();
+      beans = serverBeans;
+      renderBeans();
     });
 
+    // 豆を描画する関数
     function renderBeans() {
-        // 既存の豆要素のみを削除
-        document.querySelectorAll(".bean").forEach((bean) => bean.remove());
+      document.querySelectorAll(".bean").forEach(bean => bean.remove());
+      beans.forEach(bean => {
+        const beanElement = document.createElement("div");
+        beanElement.classList.add("bean");
+        beanElement.style.left = `${bean.left}px`;
+        beanElement.style.top = `${bean.top}px`;
 
-        beans.forEach((bean) => {
-            const beanElement = document.createElement("div");
-            beanElement.classList.add("bean");
-            beanElement.style.left = `${bean.left}px`;
-            beanElement.style.top = `${bean.top}px`;
+        if (bean.isGlowing) beanElement.classList.add("glow");
 
-            if (bean.isGlowing) {
-                beanElement.classList.add("glow");
-            }
-
-            // 豆のクリックイベント
-            beanElement.addEventListener("mousedown", () => {
-                socket.emit("beanTouched", bean.id);
-            });
-
-            beanElement.addEventListener("mouseup", () => {
-                socket.emit("beanReleased", bean.id);
-            });
-
-            container.appendChild(beanElement);
+        beanElement.addEventListener("mousedown", () => {
+          console.log(`Bean clicked: ID = ${bean.id}`);
+          socket.emit("beanTouched", bean.id);
         });
+
+        beanElement.addEventListener("mouseup", () => {
+          console.log(`Bean released: ID = ${bean.id}`);
+          socket.emit("beanReleased", bean.id);
+        });
+
+        container.appendChild(beanElement);
+      });
     }
   </script>
 </body>
