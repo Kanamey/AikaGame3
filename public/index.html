@@ -75,13 +75,11 @@
 
     socket.on("initializeBeans", (serverBeans) => {
       beans = serverBeans;
-      console.log("Beans received from server:", beans);
       renderBeans();
     });
 
     socket.on("updateBeans", (serverBeans) => {
       beans = serverBeans;
-      console.log("Beans updated from server:", beans);
       renderBeans();
     });
 
@@ -96,12 +94,10 @@
         if (bean.isGlowing) beanElement.classList.add("glow");
 
         beanElement.addEventListener("mousedown", () => {
-          console.log(`Bean clicked: ID = ${bean.id}`);
           socket.emit("beanTouched", bean.id);
         });
 
         beanElement.addEventListener("mouseup", () => {
-          console.log(`Bean released: ID = ${bean.id}`);
           socket.emit("beanReleased", bean.id);
         });
 
