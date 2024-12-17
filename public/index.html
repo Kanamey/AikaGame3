@@ -69,41 +69,71 @@
     const container = document.getElementById("game-container");
     let beans = [];
 
+    // マウス位置送信
     document.addEventListener("mousemove", (e) => {
-      socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
+        socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
     });
 
+    // 初期豆の受信
     socket.on("initializeBeans", (serverBeans) => {
-      beans = serverBeans;
-      renderBeans();
+        beans = serverBeans;
+        renderBeans();
     });
 
+    // 豆データ更新
     socket.on("updateBeans", (serverBeans) => {
-      beans = serverBeans;
-      renderBeans();
+        beans = serverBeans;
+        renderBeans();
+    });
+
+    // 豆の移動更新
+    socket.on("beanMoved", (data) => {
+        const bean = beans.find(b => b.id === data.id);
+        if (bean) {
+            bean.left = data.left;
+            bean.top = data.top;
+            renderBeans();
+        }
+    });
+
+    // 豆の光り方を更新
+    socket.on("beanGlow", (index) => {
+        const beanElement = document.querySelector(`.bean[data-id='${index}']`);
+        if (beanElement) {
+            beanElement.classList.add("glow");
+        }
+    });
+
+    socket.on("beanStopGlow", (index) => {
+        const beanElement = document.querySelector(`.bean[data-id='${index}']`);
+        if (beanElement) {
+            beanElement.classList.remove("glow");
+        }
     });
 
     function renderBeans() {
-      document.querySelectorAll(".bean").forEach(bean => bean.remove());
-      beans.forEach(bean => {
-        const beanElement = document.createElement("div");
-        beanElement.classList.add("bean");
-        beanElement.style.left = `${bean.left}px`;
-        beanElement.style.top = `${bean.top}px`;
+        document.querySelectorAll(".bean").forEach(bean => bean.remove());
+        beans.forEach(bean => {
+            const beanElement = document.createElement("div");
+            beanElement.classList.add("bean");
+            beanElement.style.left = `${bean.left}px`;
+            beanElement.style.top = `${bean.top}px`;
+            beanElement.setAttribute("data-id", bean.id);
 
-        if (bean.isGlowing) beanElement.classList.add("glow");
+            if (bean.isGlowing) beanElement.classList.add("glow");
 
-        beanElement.addEventListener("mousedown", () => {
-          socket.emit("beanTouched", bean.id);
+            beanElement.addEventListener("mousedown", () => {
+                socket.emit("beanTouched", bean.id);
+            });
+
+            beanElement.addEventListener("mouseup", () => {
+                socket.emit("beanReleased", bean.id);
+            });
+
+            container.appendChild(beanElement);
         });
-
-        beanElement.addEventListener("mouseup", () => {
-          socket.emit("beanReleased", bean.id);
-        });
-
-        container.appendChild(beanElement);
-      });
     }
-  </script>
+</script>
+
 </body>
 </html>
