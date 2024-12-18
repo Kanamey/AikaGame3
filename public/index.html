@@ -65,6 +65,17 @@
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script>
+
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+    const gameContainer = document.getElementById('game-container');
+    const containerRect = gameContainer.getBoundingClientRect();
+    console.log(`Game container position:`, containerRect); // デバッグ用ログ
+
+
+
+
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
@@ -86,8 +97,12 @@
         renderBeans();
     });
 
+
+
+
     // 豆の移動更新
     socket.on("beanMoved", (data) => {
+        console.log(`Bean moved to:`, data); // デバッグ用ログ
         const bean = beans.find(b => b.id === data.id);
         if (bean) {
             bean.left = data.left;
@@ -133,6 +148,7 @@
             container.appendChild(beanElement);
         });
     }
+  });
 </script>
 
 </body>
