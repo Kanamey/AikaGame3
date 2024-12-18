@@ -190,6 +190,28 @@
         });
     }
   });
+
+
+  // ビープ音を生成する関数
+function createBeep(frequency) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+
+    return () => {
+        oscillator.stop();
+        oscillator.disconnect();
+        gainNode.disconnect();
+    };
+}
+
 </script>
 
 </body>
