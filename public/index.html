@@ -102,12 +102,14 @@
 
     // 豆の移動更新
     socket.on("beanMoved", (data) => {
-        console.log(`Bean moved to:`, data); // デバッグ用ログ
+        console.log(`Received Bean moved to:`, data); // デバッグ用ログ
         const bean = beans.find(b => b.id === data.id);
         if (bean) {
             bean.left = data.left;
             bean.top = data.top;
+            console.log(`Bean element style before update:`, bean); // デバッグ用ログ
             renderBeans();
+            console.log(`Bean element style after update:`, bean); // デバッグ用ログ
         }
     });
 
@@ -145,7 +147,22 @@
                 socket.emit("beanReleased", bean.id);
             });
 
+            // デバッグ用インジケーター
+            const debugPoint = document.createElement("div");
+            debugPoint.style.position = "absolute";
+            debugPoint.style.width = "10px";
+            debugPoint.style.height = "10px";
+            debugPoint.style.backgroundColor = "red";
+            debugPoint.style.borderRadius = "50%";
+            debugPoint.style.left = `${bean.left}px`;
+            debugPoint.style.top = `${bean.top}px`;
+            container.appendChild(debugPoint);
+            // デバッグ用インジケーターここまで
+
+
             container.appendChild(beanElement);
+
+            console.log(`Debug point added at: { left: ${bean.left}px, top: ${bean.top}px }`); // デバッグ用ログ
         });
     }
   });
