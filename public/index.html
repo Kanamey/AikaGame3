@@ -160,7 +160,7 @@
     // ビープ音を再生する
     socket.on("playBeep", (beanId) => {
         if (!stopBeep) {
-            stopBeep = createBeep(440); // 440Hz の音
+            stopBeep = createBeep(220); // 440Hz の音
             console.log(`Beep started for bean ${beanId}`);
         }
     });
