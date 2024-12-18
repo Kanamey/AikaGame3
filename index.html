@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>豆移しゲーム</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: flex-start; /* 左寄せ */
+        align-items: flex-start; /* 上寄せ */
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+    
+      #game-container {
+        width: 80%;
+        height: 80%;
+        position: relative;
+        border: 2px solid black;
+        background-color: white;
+      }
+    
+      .bowl {
+        width: 150px;
+        height: 150px;
+        border: 2px solid black;
+        border-radius: 50%;
+        position: absolute;
+        transform: translate(-50%, -50%);
+      }
+    
+      #left-bowl {
+        left: 10%;
+        top: 50%;
+        background-color: lightblue;
+      }
+    
+      #right-bowl {
+        right: 10%;
+        top: 50%;
+        background-color: lightgreen;
+      }
+    
+      .bean {
+        width: 30px;
+        height: 30px;
+        background-color: brown;
+        border-radius: 50%;
+        position: absolute;
+        transform: translate(-50%, -50%);
+      }
+    
+      .glow {
+        background-color: yellow;
+        box-shadow: 0 0 10px yellow;
+      }
+    </style>
+  
+</head>
+<body>
+  <div id="game-container">
+    <div id="left-bowl" class="bowl"></div>
+    <div id="right-bowl" class="bowl"></div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+      
+    const gameContainer = document.getElementById('game-container');
+    const containerRect = gameContainer.getBoundingClientRect();
+    console.log(`Game container position:`, containerRect); // デバッグ用ログ
+
+
+
+
+    const socket = io();
+    const container = document.getElementById("game-container");
+    let beans = [];
+
+    // マウス位置送信
+    document.addEventListener("mousemove", (e) => {
+        socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
+    });
+
+
+    // 追加
+    document.addEventListener("mouseup", () => {
+        beans.forEach(bean => {
+            socket.emit("beanReleased", bean.id);
+        });
+        console.log("Mouse released");
+    });
+
+
+    // 初期豆の受信
+    socket.on("initializeBeans", (serverBeans) => {
+        beans = serverBeans;
+        renderBeans();
+    });
+
+    // 豆データ更新
+    socket.on("updateBeans", (serverBeans) => {
+        beans = serverBeans;
+        renderBeans();
+    });
+
+
+
+
+    // 豆の移動更新
+    socket.on("beanMoved", (data) => {
+        console.log(`Received Bean moved to:`, data); // デバッグ用ログ
+        const bean = beans.find(b => b.id === data.id);
+
+        // 該当する豆を検索して位置を更新
+        const beanElement = document.querySelector(`.bean[data-id='${data.id}']`);
+        if (beanElement) {
+            beanElement.style.left = `${data.left}px`;
+            beanElement.style.top = `${data.top}px`;
+            console.log(`Bean ${data.id} moved to { left: ${data.left}px, top: ${data.top}px }`);
+        }
+
+        if (bean) {
+            bean.left = data.left;
+            bean.top = data.top;
+            console.log(`Bean element style before update:`, bean); // デバッグ用ログ
+            renderBeans();
+            console.log(`Bean element style after update:`, bean); // デバッグ用ログ
+        }
+    });
+
+    // 豆の光り方を更新
+    socket.on("beanGlow", (index) => {
+        const beanElement = document.querySelector(`.bean[data-id='${index}']`);
+        if (beanElement) {
+            beanElement.classList.add("glow");
+        }
+    });
+
+    socket.on("beanStopGlow", (index) => {
+        const beanElement = document.querySelector(`.bean[data-id='${index}']`);
+        if (beanElement) {
+            beanElement.classList.remove("glow");
+        }
+    });
+
+    function renderBeans() {
+        document.querySelectorAll(".bean").forEach(bean => bean.remove());
+        beans.forEach(bean => {
+            const beanElement = document.createElement("div");
+            beanElement.classList.add("bean");
+            beanElement.style.left = `${bean.left}px`;
+            beanElement.style.top = `${bean.top}px`;
+            beanElement.setAttribute("data-id", bean.id);
+
+            if (bean.isGlowing) beanElement.classList.add("glow");
+
+            // デバッグログ
+            console.log(`Rendering bean ${bean.id} at { left: ${bean.left}px, top: ${bean.top}px }`);
+
+            beanElement.addEventListener("mousedown", () => {
+                socket.emit("beanTouched", bean.id);
+            });
+
+            beanElement.addEventListener("mouseup", () => {
+                socket.emit("beanReleased", bean.id);
+            });
+
+            // // デバッグ用インジケーター、赤丸
+            // const debugPoint = document.createElement("div");
+            // debugPoint.style.position = "absolute";
+            // debugPoint.style.width = "10px";
+            // debugPoint.style.height = "10px";
+            // debugPoint.style.backgroundColor = "red";
+            // debugPoint.style.borderRadius = "50%";
+            // debugPoint.style.left = `${bean.left}px`;
+            // debugPoint.style.top = `${bean.top}px`;
+            // container.appendChild(debugPoint);
+            // // デバッグ用インジケーターここまで
+
+
+            container.appendChild(beanElement);
+
+            // console.log(`Debug point added at: { left: ${bean.left}px, top: ${bean.top}px }`); // デバッグ用ログ
+        });
+    }
+  });
+
+
+  // ビープ音を生成する関数
+function createBeep(frequency) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+
+    return () => {
+        oscillator.stop();
+        oscillator.disconnect();
+        gainNode.disconnect();
+    };
+}
+
+</script>
+
+</body>
+</html>
