@@ -84,6 +84,11 @@ io.on("connection", (socket) => {
                 console.log(`Bean ${bean.id} moved to: { left: ${bean.left}, top: ${bean.top} }`); // デバッグ用
                 io.emit("beanGlow", bean.id);
             }
+
+            io.emit("playBeep", beanId); // 二人が触っているときにビープ音再生指示を送信
+            bean.isGlowing = true;
+            io.emit("beanGlow", bean.id);
+
         }
     
         io.emit("updateBeans", beans);
@@ -101,6 +106,7 @@ io.on("connection", (socket) => {
             bean.isGlowing = false;
             io.emit("beanStopGlow", bean.id);
             console.log(`Bean ${beanId} stopped glowing`);
+            io.emit("stopBeep", beanId); // クリックが解除されたらビープ音停止指示を送信
         }
     
         io.emit("updateBeans", beans);
