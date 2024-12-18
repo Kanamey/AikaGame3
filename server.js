@@ -55,8 +55,9 @@ io.on("connection", (socket) => {
                 bean.top = (p1.y + p2.y) / 2;
                 bean.isGlowing = true;
                 console.log(`Calculated midpoint for bean ${bean.id}:`, { left: bean.left, top: bean.top }); // デバッグ用ログ
-                
+
                 io.emit("beanMoved", { id: bean.id, left: bean.left, top: bean.top });
+                console.log(`Bean ${bean.id} moved to: { left: ${bean.left}, top: ${bean.top} }`); // デバッグ用
                 io.emit("beanGlow", bean.id);
             }
         }
