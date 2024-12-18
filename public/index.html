@@ -130,14 +130,14 @@
         }
     });
 
-    // ビープ音を再生するリスナー
-    let stopBeep = null;
-    socket.on("beanGlow", (index) => {
-        if (!stopBeep) {
-            stopBeep = createBeep(440); // 440Hz の音
-            console.log(`Beep started for bean ${index}`);
-        }
-    });
+    // // ビープ音を再生するリスナー
+    // let stopBeep = null;
+    // socket.on("beanGlow", (index) => {
+    //     if (!stopBeep) {
+    //         stopBeep = createBeep(440); // 440Hz の音
+    //         console.log(`Beep started for bean ${index}`);
+    //     }
+    // });
 
     // 豆の光り方を更新
     socket.on("beanGlow", (index) => {
@@ -233,6 +233,8 @@
               stopBeep();
               stopBeep = null;
               console.log(`Beep stopped for bean ${beanId}`);
+          }else {
+        console.log(`No beep to stop for bean ${beanId}`); // デバッグ用
           }
       });
 
