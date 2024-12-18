@@ -67,16 +67,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
 
-
-
     document.addEventListener("DOMContentLoaded", () => {
       
     const gameContainer = document.getElementById('game-container');
     const containerRect = gameContainer.getBoundingClientRect();
     console.log(`Game container position:`, containerRect); // デバッグ用ログ
-
-
-
 
     const socket = io();
     const container = document.getElementById("game-container");
@@ -202,24 +197,44 @@
 
 
   // ビープ音を生成する関数
-function createBeep(frequency) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    function createBeep(frequency) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
 
-    oscillator.start();
+        oscillator.start();
 
-    return () => {
-        oscillator.stop();
-        oscillator.disconnect();
-        gainNode.disconnect();
-    };
-}
+        return () => {
+            oscillator.stop();
+            oscillator.disconnect();
+            gainNode.disconnect();
+        };
+    }
+
+    let stopBeep = null;
+
+      // ビープ音を再生する
+      socket.on("playBeep", (beanId) => {
+          if (!stopBeep) {
+              stopBeep = createBeep(440); // 440Hz の音
+              console.log(`Beep started for bean ${beanId}`);
+          }
+      });
+
+      // ビープ音を停止する
+      socket.on("stopBeep", (beanId) => {
+          if (stopBeep) {
+              stopBeep();
+              stopBeep = null;
+              console.log(`Beep stopped for bean ${beanId}`);
+          }
+      });
+
 
 </script>
 
