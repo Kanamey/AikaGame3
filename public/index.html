@@ -83,8 +83,9 @@
     });
 
 
-    // 追加
+    // マウスを離す
     document.addEventListener("mouseup", () => {
+        // 全ての豆に対して beanReleased を送信
         beans.forEach(bean => {
             socket.emit("beanReleased", bean.id);
         });
