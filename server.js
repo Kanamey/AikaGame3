@@ -106,10 +106,10 @@ io.on("connection", (socket) => {
             bean.isGlowing = false;
             io.emit("beanStopGlow", bean.id);
             console.log(`Bean ${beanId} stopped glowing`);
-            io.emit("stopBeep", beanId); // クリックが解除されたらビープ音停止指示を送信
+            io.emit("stopBeep", bean.id); // クリックが解除されたらビープ音停止指示を送信
         }
     
-        io.emit("updateBeans", beans);
+        io.emit("updateBeans", beans); // 状態をクライアントに送信
     });
     
 
