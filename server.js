@@ -92,11 +92,15 @@ io.on("connection", (socket) => {
     socket.on("beanReleased", (beanId) => {
         const bean = beans.find(b => b.id === beanId);
         if (!bean) return;
-    
+
+        // プレイヤーIDを touchedBy から削除
         bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
+
+        // プレイヤーが 1 人以下の場合、光を止める
         if (bean.touchedBy.length < 2) {
             bean.isGlowing = false;
             io.emit("beanStopGlow", bean.id);
+            console.log(`Bean ${beanId} stopped glowing`);
         }
     
         io.emit("updateBeans", beans);
