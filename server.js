@@ -8,7 +8,18 @@ const io = socketIo(server);
 
 app.use(express.static("public"));
 
-const beans = []; // 豆データ
+const beans = [
+    { id: 0, left: 123, top: 235, isGlowing: false, touchedBy: [] },
+    { id: 1, left: 165, top: 310, isGlowing: false, touchedBy: [] },
+    { id: 2, left: 187, top: 265, isGlowing: false, touchedBy: [] },
+    { id: 3, left: 290, top: 315, isGlowing: false, touchedBy: [] },
+    { id: 4, left: 245, top: 400, isGlowing: false, touchedBy: [] },
+    { id: 5, left: 328, top: 305, isGlowing: false, touchedBy: [] },
+    { id: 6, left: 375, top: 450, isGlowing: false, touchedBy: [] },
+    { id: 7, left: 400, top: 480, isGlowing: false, touchedBy: [] },
+    { id: 8, left: 350, top: 225, isGlowing: false, touchedBy: [] },
+    { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [] }
+]; // 豆データ
 const players = {}; // 各プレイヤーの位置情報
 
 // 豆を初期化する関数
@@ -85,7 +96,7 @@ io.on("connection", (socket) => {
                 io.emit("beanGlow", bean.id);
             }
 
-            io.emit("playBeep", beanId); // 二人が触っているときにビープ音再生指示を送信
+            io.emit("playBeep", bean.id); // 二人が触っているときにビープ音再生指示を送信
             bean.isGlowing = true;
             io.emit("beanGlow", bean.id);
 
