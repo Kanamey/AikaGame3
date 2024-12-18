@@ -105,6 +105,15 @@
     socket.on("beanMoved", (data) => {
         console.log(`Received Bean moved to:`, data); // デバッグ用ログ
         const bean = beans.find(b => b.id === data.id);
+
+        // 該当する豆を検索して位置を更新
+        const beanElement = document.querySelector(`.bean[data-id='${data.id}']`);
+        if (beanElement) {
+            beanElement.style.left = `${data.left}px`;
+            beanElement.style.top = `${data.top}px`;
+            console.log(`Bean ${data.id} moved to { left: ${data.left}px, top: ${data.top}px }`);
+        }
+
         if (bean) {
             bean.left = data.left;
             bean.top = data.top;
