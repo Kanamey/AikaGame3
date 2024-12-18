@@ -134,6 +134,15 @@
         }
     });
 
+    // ビープ音を再生するリスナー
+    let stopBeep = null;
+    socket.on("beanGlow", (index) => {
+        if (!stopBeep) {
+            stopBeep = createBeep(440); // 440Hz の音
+            console.log(`Beep started for bean ${index}`);
+        }
+    });
+
     // 豆の光り方を更新
     socket.on("beanGlow", (index) => {
         const beanElement = document.querySelector(`.bean[data-id='${index}']`);
