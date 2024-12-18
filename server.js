@@ -34,6 +34,7 @@ io.on("connection", (socket) => {
     // プレイヤーのマウス位置を受信
     socket.on("updateMousePosition", (position) => {
         players[socket.id] = position;
+        console.log(`Updated position for ${socket.id}:`, position); // デバッグ用ログ
     });
 
     // 豆がクリックされた時
@@ -53,7 +54,8 @@ io.on("connection", (socket) => {
                 bean.left = (p1.x + p2.x) / 2;
                 bean.top = (p1.y + p2.y) / 2;
                 bean.isGlowing = true;
-    
+                console.log(`Calculated midpoint for bean ${bean.id}:`, { left: bean.left, top: bean.top }); // デバッグ用ログ
+                
                 io.emit("beanMoved", { id: bean.id, left: bean.left, top: bean.top });
                 io.emit("beanGlow", bean.id);
             }
