@@ -154,6 +154,28 @@
         }
     });
 
+    // 音の再生について
+    let stopBeep = null;
+
+    // ビープ音を再生する
+    socket.on("playBeep", (beanId) => {
+        if (!stopBeep) {
+            stopBeep = createBeep(440); // 440Hz の音
+            console.log(`Beep started for bean ${beanId}`);
+        }
+    });
+
+    // ビープ音を停止する
+    socket.on("stopBeep", (beanId) => {
+        if (stopBeep) {
+            stopBeep();
+            stopBeep = null;
+            console.log(`Beep stopped for bean ${beanId}`);
+        }else {
+      console.log(`No beep to stop for bean ${beanId}`); // デバッグ用
+        }
+    });
+
     function renderBeans() {
         document.querySelectorAll(".bean").forEach(bean => bean.remove());
         beans.forEach(bean => {
@@ -217,26 +239,7 @@
         };
     }
 
-    let stopBeep = null;
-
-      // ビープ音を再生する
-      socket.on("playBeep", (beanId) => {
-          if (!stopBeep) {
-              stopBeep = createBeep(440); // 440Hz の音
-              console.log(`Beep started for bean ${beanId}`);
-          }
-      });
-
-      // ビープ音を停止する
-      socket.on("stopBeep", (beanId) => {
-          if (stopBeep) {
-              stopBeep();
-              stopBeep = null;
-              console.log(`Beep stopped for bean ${beanId}`);
-          }else {
-        console.log(`No beep to stop for bean ${beanId}`); // デバッグ用
-          }
-      });
+    
 
 
 </script>
