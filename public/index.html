@@ -103,6 +103,7 @@
   <div class="controls">
     <button id="start-button" class="button">スタート</button>
     <button id="output-button" class="button">出力</button>
+    <button id="reset-button" class="button">リセット</button> <!-- リセットボタンを追加 -->
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -111,6 +112,7 @@
     // ボタン
     const startButton = document.getElementById("start-button");
     const outputButton = document.getElementById("output-button"); 
+    const resetButton = document.getElementById("reset-button");
     // game-container 
     const gameContainer = document.getElementById('game-container');
     const containerRect = gameContainer.getBoundingClientRect();
@@ -171,6 +173,17 @@
       console.log("現在の豆の状態:", beans);
     });
 
+    // リセットボタンが押されたとき
+    resetButton.addEventListener("click", () => {
+      socket.emit("resetGame");
+      console.log("リセットボタンが押されました");
+    });
+
+    // サーバーから豆の状態が更新された際に描画を更新
+    socket.on("updateBeans", (updatedBeans) => {
+        beans = updatedBeans;
+        renderBeans(); // 豆を再描画
+    });
 
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
