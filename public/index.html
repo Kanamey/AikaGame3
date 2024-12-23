@@ -65,6 +65,7 @@
 
       .button {
       margin: 10px 0 10px auto;
+      float: right; /* 右寄せに配置、追加してみた */
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
@@ -138,11 +139,19 @@
         alert("ゲーム終了です！");
     });
 
-
       // 出力ボタンを押された時
     outputButton.addEventListener("click", () => {
       console.log("豆の状態を出力:");
-      socket.emit("requestBeanData");
+      socket.emit("requestBeanData"); //これ要らないかも？
+      socket.emit("requestCSV");
+    });
+
+    socket.on("csvReady", (path) => {
+      const link = document.createElement("a");
+      link.href = path;
+      link.download = "game_data.csv";
+      link.click();
+      console.log("CSVファイルをダウンロードしました:", path);
     });
 
     socket.on("sendBeanData", (beans) => {
@@ -165,21 +174,11 @@
         console.log("Mouse released");
     });
 
-
-    // 初期豆の受信
-    socket.on("initializeBeans", (serverBeans) => {
-        beans = serverBeans;
-        renderBeans();
-    });
-
     // 豆データ更新
     socket.on("updateBeans", (serverBeans) => {
         beans = serverBeans;
         renderBeans();
     });
-
-
-
 
     // 豆の移動更新
     socket.on("beanMoved", (data) => {
