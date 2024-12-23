@@ -171,6 +171,7 @@
 
     // 初期豆の受信
     socket.on("initializeBeans", (serverBeans) => {
+        console.log("Beans received from server:", serverBeans);
         beans = serverBeans;
         renderBeans();
     });
