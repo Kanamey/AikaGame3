@@ -23,18 +23,18 @@ const beans = [
 const players = {}; // 各プレイヤーの位置情報
 
 // 豆を初期化する関数
-function initializeBeans() {
-    for (let i = 0; i < 5; i++) {
-        beans.push({
-            id: i,
-            left: 200 + Math.random() * 100,
-            top: 300 + Math.random() * 100,
-            touchedBy: [],
-            isGlowing: false
-        });
-    }
-    console.log("Beans initialized:", beans);
-}
+// function initializeBeans() {
+//     for (let i = 0; i < 5; i++) {
+//         beans.push({
+//             id: i,
+//             left: 200 + Math.random() * 100,
+//             top: 300 + Math.random() * 100,
+//             touchedBy: [],
+//             isGlowing: false
+//         });
+//     }
+//     console.log("Beans initialized:", beans);
+// }
 
 
 
