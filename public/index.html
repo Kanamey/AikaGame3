@@ -64,7 +64,7 @@
       }
 
       .button {
-      margin: 10px 0;
+      margin: 100px 0;
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
@@ -102,37 +102,52 @@
     const containerRect = gameContainer.getBoundingClientRect();
     console.log(`Game container position:`, containerRect); // デバッグ用ログ
 
-    // タイマーセット
-    let timer;
+    // // タイマーセット
+    // let timer;
 
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
 
-    // タイマーで時間計測・時間指定
+    // // タイマーで時間計測・時間指定
+    // startButton.addEventListener("click", () => {
+    //     console.log("ゲームスタート!");
+    //     let countdown = 30; // 5分（300秒）
+
+    //     timer = setInterval(() => {
+    //       countdown--;
+    //       if (countdown <= 0) {
+    //         clearInterval(timer);
+    //         alert("ゲーム終了です！");
+    //       }
+    //     }, 1000);
+    //   });
+
+    // スタートボタンが押されたとき
     startButton.addEventListener("click", () => {
-        console.log("ゲームスタート!");
-        let countdown = 30; // 5分（300秒）
+                socket.emit("startGame"); // サーバーにスタートイベントを通知
+            });
 
-        timer = setInterval(() => {
-          countdown--;
-          if (countdown <= 0) {
-            clearInterval(timer);
-            alert("ゲーム終了です！");
-          }
-        }, 1000);
-      });
+    // サーバーからのタイマー更新を受け取る
+    socket.on("updateTimer", (timeLeft) => {
+      console.log(`残り時間: ${timeLeft}秒`);
+    });
+
+    // ゲーム終了通知を受け取る
+    socket.on("gameEnded", () => {
+        alert("ゲーム終了です！");
+    });
 
 
-          // 出力ボタンを押された時
-        outputButton.addEventListener("click", () => {
-          console.log("豆の状態を出力:");
-          socket.emit("requestBeanData");
-        });
+      // 出力ボタンを押された時
+    outputButton.addEventListener("click", () => {
+      console.log("豆の状態を出力:");
+      socket.emit("requestBeanData");
+    });
 
-      socket.on("sendBeanData", (beans) => {
-        console.log("現在の豆の状態:", beans);
-      });
+    socket.on("sendBeanData", (beans) => {
+      console.log("現在の豆の状態:", beans);
+    });
 
 
     // マウス位置送信
@@ -296,10 +311,6 @@
             gainNode.disconnect();
         };
     }
-
-
-    
-
 
 </script>
 
