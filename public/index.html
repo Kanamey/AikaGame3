@@ -70,6 +70,24 @@
     <!-- <div id="left-bowl" class="bowl"></div> -->
     <div id="right-bowl" class="bowl"></div>
   </div>
+
+  <!-- スタートボタン -->
+    <button id="start-button" style="
+    position: absolute;
+    top: 10%;
+    right: 5%;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    ">
+    スタート
+    </button>
+
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
 
@@ -82,6 +100,22 @@
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
+
+    const startButton = document.getElementById("start-button");
+
+    startButton.addEventListener("click", () => {
+      // サーバーにスタートイベントを送信
+      socket.emit("startGame");
+      console.log("スタートボタンが押されました。");
+      // 必要に応じてスタートボタンを非表示
+      startButton.style.display = "none";
+    });
+
+    // サーバーからゲーム開始の合図を受け取る
+    socket.on("gameStarted", () => {
+      console.log("ゲームが開始されました！");
+      // 必要な初期化処理を追加
+    });
 
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
