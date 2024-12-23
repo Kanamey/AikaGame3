@@ -64,6 +64,13 @@ io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
 
+    // スタートイベントを受け取る
+    socket.on("startGame", () => {
+        console.log("ゲーム開始リクエストを受信しました。");
+        // 全てのクライアントにゲーム開始を通知
+        io.emit("gameStarted");
+    });
+    
     // socket.emit("initializeBeans", beans);
 
     // プレイヤーのマウス位置を受信
