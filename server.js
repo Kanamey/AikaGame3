@@ -123,7 +123,13 @@ io.on("connection", (socket) => {
     
         io.emit("updateBeans", beans); // 状態をクライアントに送信
     });
-    
+
+      // 豆のデータをクライアントに送信
+    socket.on("requestBeanData", () => {
+        socket.emit("sendBeanData", beans);
+        console.log(`豆の状態をクライアント ${socket.id} に送信しました`);
+    });
+        
 
     // プレイヤー切断時
     socket.on("disconnect", () => {
