@@ -64,20 +64,29 @@
       }
 
       .button {
-      margin: 10px 0 10px auto;
-      float: right; /* 右寄せに配置、追加してみた */
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
+        position: absolute;
+        right: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
 
-    .button:hover {
-      background-color: #0056b3;
-    }
+      #start-button {
+        top: 10px; /* スタートボタンの位置 */
+      }
+
+      #output-button {
+        top: 60px; /* 出力ボタンをスタートボタンの下に */
+      }
+
+      .button:hover {
+        background-color: #0056b3;
+      }
+
     </style>
   
 </head>
@@ -86,10 +95,14 @@
     <!-- <div id="left-bowl" class="bowl"></div> -->
     <div id="right-bowl" class="bowl"></div>
     <!-- ボタン -->
-    <div class="controls">
+    <!-- <div class="controls">
       <button id="start-button" class="button">スタート</button>
       <button id="output-button" class="button">出力</button>
-    </div>
+    </div> -->
+  </div>
+  <div class="controls">
+    <button id="start-button" class="button">スタート</button>
+    <button id="output-button" class="button">出力</button>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script>
