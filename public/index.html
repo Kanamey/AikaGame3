@@ -133,21 +133,22 @@
     }
 
     // ゲーム終了メッセージを表示
+    // const endMessage = document.createElement("div");
     function displayEndMessage() {
-      // const endMessage = document.createElement("div");
-      // endMessage.style.position = "absolute";
-      // endMessage.style.top = "50%";
-      // endMessage.style.left = "50%";
-      // endMessage.style.transform = "translate(-50%, -50%)";
-      // endMessage.style.fontSize = "24px";
-      // endMessage.style.fontWeight = "bold";
-      // endMessage.style.color = "red";
-      // endMessage.textContent = "ゲーム終了です";
       const endMessage = document.getElementById(messageId);
         if (endMessage) {
             endMessage.textContent = "ゲーム終了です";
             endMessage.style.display = "block";
         }
+      endMessage.style.position = "absolute";
+      endMessage.style.top = "50%";
+      endMessage.style.left = "50%";
+      endMessage.style.transform = "translate(-50%, -50%)";
+      endMessage.style.fontSize = "24px";
+      endMessage.style.fontWeight = "bold";
+      endMessage.style.color = "red";
+      endMessage.textContent = "ゲーム終了です";
+      
       document.body.appendChild(endMessage);
     }
 
