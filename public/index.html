@@ -62,17 +62,6 @@
         background-color:  brown;
         box-shadow: 0 0 0px  brown;
       }
-      .start-button {
-        position: absolute;
-        padding: 10px 20px;
-        font-size: 16px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-
     </style>
   
 </head>
@@ -81,12 +70,6 @@
     <!-- <div id="left-bowl" class="bowl"></div> -->
     <div id="right-bowl" class="bowl"></div>
   </div>
-
-  <!-- スタートボタン -->
-  <button id="start1-button" class="start-button" style="top: 10%; right: 5%;">スタート1</button>
-  <button id="start2-button" class="start-button" style="top: 20%; right: 5%;">スタート2</button>
-
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
 
@@ -99,60 +82,6 @@
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
-
-    // スタートボタン処理
-    const startButton = document.getElementById("start-button");
-
-    startButton.addEventListener("click", () => {
-      // サーバーにスタートイベントを送信
-      socket.emit("startGame");
-      console.log("スタートボタンが押されました。");
-      // 必要に応じてスタートボタンを非表示
-      startButton.style.display = "none";
-    });
-
-    // サーバーからゲーム開始の合図を受け取る
-    socket.on("gameStarted", () => {
-      console.log("ゲームが開始されました！");
-      startCountdown();
-      // 必要な初期化処理を追加
-    });
-
-    // カウントダウン処理
-    function startCountdown() {
-      let timeLeft = 0.5 * 60; // 5分（秒換算）
-      const countdownInterval = setInterval(() => {
-        timeLeft--;
-        console.log(`Time left for ${buttonId}: ${timeLeft} seconds`);
-
-        if (timeLeft <= 0) {
-          clearInterval(countdownInterval);
-          displayEndMessage();
-        }
-      }, 1000); // 1秒ごとに実行
-    }
-
-    // ゲーム終了メッセージを表示
-    // const endMessage = document.createElement("div");
-    function displayEndMessage() {
-      const endMessage = document.getElementById(messageId);
-        if (endMessage) {
-            endMessage.textContent = "ゲーム終了です";
-            endMessage.style.display = "block";
-        }
-      endMessage.style.position = "absolute";
-      endMessage.style.top = "50%";
-      endMessage.style.left = "50%";
-      endMessage.style.transform = "translate(-50%, -50%)";
-      endMessage.style.fontSize = "24px";
-      endMessage.style.fontWeight = "bold";
-      endMessage.style.color = "red";
-      endMessage.textContent = "ゲーム終了です";
-      
-      document.body.appendChild(endMessage);
-    }
-
-
 
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
@@ -172,7 +101,6 @@
 
     // 初期豆の受信
     socket.on("initializeBeans", (serverBeans) => {
-        console.log("Beans received from server:", serverBeans);
         beans = serverBeans;
         renderBeans();
     });
@@ -295,16 +223,6 @@
         });
     }
   });
-
-  document.getElementById("start1-button").addEventListener("click", () => {
-        startCountdown("start1-button", "end-message-1");
-        document.getElementById("start1-button").disabled = true; // ボタンを無効化
-    });
-
-    document.getElementById("start2-button").addEventListener("click", () => {
-        startCountdown("start2-button", "end-message-2");
-        document.getElementById("start2-button").disabled = true; // ボタンを無効化
-    });
 
 
   // ビープ音を生成する関数
