@@ -21,6 +21,7 @@ const beans = [
     { id: 8, left: 350, top: 225, isGlowing: false, touchedBy: [] },
     { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [] }
 ]; // 豆データ
+let initialBeans = JSON.parse(JSON.stringify(beans)); // 初期状態をコピー
 const players = {}; // 各プレイヤーの位置情報
 const beanTimers = {}; // 各豆の時間を計測するオブジェクト
 
@@ -151,12 +152,18 @@ io.on("connection", (socket) => {
         socket.emit("csvReady", "/game_data.csv"); // クライアントに通知
     });
 
-      // 豆のデータをクライアントに送信
+    // 豆のデータをクライアントに送信
     socket.on("requestBeanData", () => {
         socket.emit("sendBeanData", beans);
         console.log(`豆の状態をクライアント ${socket.id} に送信しました`);
     });
-        
+
+    socket.on("resetBeans", () => {
+        initialBeans = JSON.parse(JSON.stringify(beans)); // 初期状態に戻す
+        io.emit("updateBeans", initialBeans); // 全クライアントに更新を通知
+        console.log("Beans have been reset to initial state");
+    });
+
 
     // プレイヤー切断時
     socket.on("disconnect", () => {
