@@ -64,7 +64,7 @@ io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
 
-    socket.emit("initializeBeans", beans);
+    // socket.emit("initializeBeans", beans);
 
     // プレイヤーのマウス位置を受信
     socket.on("updateMousePosition", (position) => {
@@ -136,7 +136,7 @@ io.on("connection", (socket) => {
     });
 });
 
-initializeBeans();
+// initializeBeans();
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
