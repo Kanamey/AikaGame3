@@ -101,6 +101,7 @@
     const container = document.getElementById("game-container");
     let beans = [];
 
+    // スタートボタン処理
     const startButton = document.getElementById("start-button");
 
     startButton.addEventListener("click", () => {
@@ -114,8 +115,37 @@
     // サーバーからゲーム開始の合図を受け取る
     socket.on("gameStarted", () => {
       console.log("ゲームが開始されました！");
+      startCountdown();
       // 必要な初期化処理を追加
     });
+
+    // カウントダウン処理
+    function startCountdown() {
+      let timeLeft = 0.5 * 60; // 5分（秒換算）
+      const countdownInterval = setInterval(() => {
+        timeLeft--;
+        console.log(`Time left: ${timeLeft} seconds`);
+
+        if (timeLeft <= 0) {
+          clearInterval(countdownInterval);
+          displayEndMessage();
+        }
+      }, 1000); // 1秒ごとに実行
+    }
+
+    // ゲーム終了メッセージを表示
+    function displayEndMessage() {
+      const endMessage = document.createElement("div");
+      endMessage.style.position = "absolute";
+      endMessage.style.top = "50%";
+      endMessage.style.left = "50%";
+      endMessage.style.transform = "translate(-50%, -50%)";
+      endMessage.style.fontSize = "24px";
+      endMessage.style.fontWeight = "bold";
+      endMessage.style.color = "red";
+      endMessage.textContent = "ゲーム終了です";
+      document.body.appendChild(endMessage);
+    }
 
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
