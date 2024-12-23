@@ -22,7 +22,7 @@ const beans = [
 ]; // 豆データ
 const players = {}; // 各プレイヤーの位置情報
 
-豆を初期化する関数
+// 豆を初期化する関数
 function initializeBeans() {
     for (let i = 0; i < 5; i++) {
         beans.push({
