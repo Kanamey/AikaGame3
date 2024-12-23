@@ -64,7 +64,7 @@
       }
 
       .button {
-      margin: 100px 0;
+      margin: 10px 0 10px auto;
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
@@ -97,6 +97,24 @@
     // ボタン
     const startButton = document.getElementById("start-button");
     const outputButton = document.getElementById("output-button"); 
+
+    // 出力ボタンを押したときにCSVデータをリクエスト
+    outputButton.addEventListener("click", () => {
+        socket.emit("requestCSV");
+    });
+
+    // サーバーからCSVデータを受け取る
+    socket.on("sendCSV", (csvData) => {
+        const blob = new Blob([csvData], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "bean_touch_times.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+
     // game-container 
     const gameContainer = document.getElementById('game-container');
     const containerRect = gameContainer.getBoundingClientRect();
@@ -299,7 +317,8 @@
         const gainNode = audioContext.createGain();
 
         oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        // 下のfrequencyを変更すると周波数を設定可能
+        oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
