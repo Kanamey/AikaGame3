@@ -97,39 +97,31 @@
     // ボタン
     const startButton = document.getElementById("start-button");
     const outputButton = document.getElementById("output-button"); 
-
     // game-container 
     const gameContainer = document.getElementById('game-container');
     const containerRect = gameContainer.getBoundingClientRect();
     console.log(`Game container position:`, containerRect); // デバッグ用ログ
 
-
-    // 初期豆の受信
-    socket.on("initializeBeans", (serverBeans) => {
-        beans = serverBeans;
-        renderBeans();
-    });
-
-    // 出力ボタンを押したときにCSVデータをリクエスト
-    outputButton.addEventListener("click", () => {
-        socket.emit("requestCSV");
-    });
-
-    // サーバーからCSVデータを受け取る
-    socket.on("sendCSV", (csvData) => {
-        const blob = new Blob([csvData], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "bean_touch_times.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    });
+    // // タイマーセット
+    // let timer;
 
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
+
+    // // タイマーで時間計測・時間指定
+    // startButton.addEventListener("click", () => {
+    //     console.log("ゲームスタート!");
+    //     let countdown = 30; // 5分（300秒）
+
+    //     timer = setInterval(() => {
+    //       countdown--;
+    //       if (countdown <= 0) {
+    //         clearInterval(timer);
+    //         alert("ゲーム終了です！");
+    //       }
+    //     }, 1000);
+    //   });
 
     // スタートボタンが押されたとき
     startButton.addEventListener("click", () => {
@@ -174,6 +166,11 @@
     });
 
 
+    // 初期豆の受信
+    socket.on("initializeBeans", (serverBeans) => {
+        beans = serverBeans;
+        renderBeans();
+    });
 
     // 豆データ更新
     socket.on("updateBeans", (serverBeans) => {
