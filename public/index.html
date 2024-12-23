@@ -62,6 +62,21 @@
         background-color:  brown;
         box-shadow: 0 0 0px  brown;
       }
+
+      .button {
+      margin: 10px 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
     </style>
   
 </head>
@@ -69,19 +84,56 @@
   <div id="game-container">
     <!-- <div id="left-bowl" class="bowl"></div> -->
     <div id="right-bowl" class="bowl"></div>
+    <!-- ボタン -->
+    <div class="controls">
+      <button id="start-button" class="button">スタート</button>
+      <button id="output-button" class="button">出力</button>
+    </div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script>
 
     document.addEventListener("DOMContentLoaded", () => {
-      
+    // ボタン
+    const startButton = document.getElementById("start-button");
+    const outputButton = document.getElementById("output-button"); 
+    // game-container 
     const gameContainer = document.getElementById('game-container');
     const containerRect = gameContainer.getBoundingClientRect();
     console.log(`Game container position:`, containerRect); // デバッグ用ログ
 
+    // タイマーセット
+    let timer;
+
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
+
+    // タイマーで時間計測・時間指定
+    startButton.addEventListener("click", () => {
+        console.log("ゲームスタート!");
+        let countdown = 30; // 5分（300秒）
+
+        timer = setInterval(() => {
+          countdown--;
+          if (countdown <= 0) {
+            clearInterval(timer);
+            alert("ゲーム終了です！");
+          }
+        }, 1000);
+      });
+
+
+          // 出力ボタンを押された時
+        outputButton.addEventListener("click", () => {
+          console.log("豆の状態を出力:");
+          socket.emit("requestBeanData");
+        });
+
+      socket.on("sendBeanData", (beans) => {
+        console.log("現在の豆の状態:", beans);
+      });
+
 
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
@@ -244,6 +296,7 @@
             gainNode.disconnect();
         };
     }
+
 
     
 
