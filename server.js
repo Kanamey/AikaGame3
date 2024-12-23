@@ -57,12 +57,32 @@ setInterval(() => {
     });
 }, 30); // 30msごとに中点計算を実行
 
-
+let isGameRunning = false; // ゲームが実行中かどうかを管理
+let countdown; // タイマーの状態を保持
 
 
 io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
+
+    // スタートボタンが押されたらゲームを開始
+    socket.on("startGame", () => {
+        if (!isGameRunning) { // ゲームがまだ実行中でない場合のみ開始
+            isGameRunning = true;
+            let timeLeft = 5 * 60; // 5分（秒）
+
+            countdown = setInterval(() => {
+                timeLeft--;
+                io.emit("updateTimer", timeLeft); // 全クライアントに残り時間を送信
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    isGameRunning = false;
+                    io.emit("gameEnded"); // 全クライアントにタイムアップを通知
+                }
+            }, 1000); // 1秒ごとに実行
+        }
+    });
 
     // socket.emit("initializeBeans", beans);
 
