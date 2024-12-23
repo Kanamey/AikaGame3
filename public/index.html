@@ -66,20 +66,6 @@
   
 </head>
 <body>
-
-  <div id="participant-selection">
-    <label for="participant-number">参加者番号:</label>
-    <select id="participant-number">
-        <option value="" disabled selected>選択してください</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-    </select>
-    <button id="next-button">次に進む</button>
-  </div>
-
-
   <div id="game-container">
     <!-- <div id="left-bowl" class="bowl"></div> -->
     <div id="right-bowl" class="bowl"></div>
@@ -88,39 +74,15 @@
   <script>
 
     document.addEventListener("DOMContentLoaded", () => {
-    
-    const participantSelection = document.getElementById("participant-selection");
+      
     const gameContainer = document.getElementById('game-container');
     const containerRect = gameContainer.getBoundingClientRect();
-    const nextButton = document.getElementById("next-button");
-    const participantNumber = document.getElementById("participant-number");
     console.log(`Game container position:`, containerRect); // デバッグ用ログ
 
-    // サーバーと接続
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
 
-
-    nextButton.addEventListener("click", () => {
-        const selectedNumber = participantNumber.value;
-        if (selectedNumber) {
-            // 参加者番号をサーバーに送信
-            socket.emit("setParticipantNumber", selectedNumber);
-            console.log(`参加者番号 ${selectedNumber} がサーバーに送信されました`);
-        } else {
-            alert("参加者番号を選択してください！");
-        }
-    });
-
-    // サーバーから「全員準備完了」の通知を受け取る
-    socket.on("allReady", () => {
-        console.log("全員準備完了！");
-        participantSelection.style.display = "none";
-        gameContainer.style.display = "block";
-    });
-
-    
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
         socket.emit("updateMousePosition", { x: e.clientX, y: e.clientY });
