@@ -78,7 +78,7 @@ io.on("connection", (socket) => {
         io.emit("gameStarted");
     });
 
-    // socket.emit("initializeBeans", beans);
+    socket.emit("initializeBeans", beans);
 
     // プレイヤーのマウス位置を受信
     socket.on("updateMousePosition", (position) => {
