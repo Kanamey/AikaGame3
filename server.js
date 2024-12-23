@@ -9,16 +9,16 @@ const io = socketIo(server);
 app.use(express.static("public"));
 
 const beans = [
-    { id: 0, left: 123, top: 235, isGlowing: false, touchedBy: [] },
-    { id: 1, left: 165, top: 310, isGlowing: false, touchedBy: [] },
-    { id: 2, left: 187, top: 265, isGlowing: false, touchedBy: [] },
-    { id: 3, left: 290, top: 315, isGlowing: false, touchedBy: [] },
-    { id: 4, left: 245, top: 400, isGlowing: false, touchedBy: [] },
-    { id: 5, left: 328, top: 305, isGlowing: false, touchedBy: [] },
-    { id: 6, left: 375, top: 450, isGlowing: false, touchedBy: [] },
-    { id: 7, left: 400, top: 480, isGlowing: false, touchedBy: [] },
-    { id: 8, left: 350, top: 225, isGlowing: false, touchedBy: [] },
-    { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [] }
+    { id: 0, left: 123, top: 235, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 1, left: 165, top: 310, isGlowing: false, touchedBy: [], touchTimes: []},
+    { id: 2, left: 187, top: 265, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 3, left: 290, top: 315, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 4, left: 245, top: 400, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 5, left: 328, top: 305, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 6, left: 375, top: 450, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 7, left: 400, top: 480, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 8, left: 350, top: 225, isGlowing: false, touchedBy: [], touchTimes: [] },
+    { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [], touchTimes: [] }
 ]; // 豆データ
 const players = {}; // 各プレイヤーの位置情報
 
@@ -99,6 +99,11 @@ io.on("connection", (socket) => {
     
         if (!bean.touchedBy.includes(socket.id)) {
             bean.touchedBy.push(socket.id);
+
+            // 触れ始めた時間を記録
+            if (bean.touchedBy.length === 2) {
+                bean.touchTimes.push({ start: Date.now() });
+            }
         }
     
         if (bean.touchedBy.length === 2) {
@@ -132,6 +137,11 @@ io.on("connection", (socket) => {
         // プレイヤーIDを touchedBy から削除
         bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
 
+        // 触れ終わった時間を記録
+        if (bean.touchTimes.length > 0 && bean.touchTimes[bean.touchTimes.length - 1].end === undefined) {
+            bean.touchTimes[bean.touchTimes.length - 1].end = Date.now();
+        }
+
         // プレイヤーが 1 人以下の場合、光を止める
         if (bean.touchedBy.length < 2) {
             bean.isGlowing = false;
@@ -144,7 +154,23 @@ io.on("connection", (socket) => {
         io.emit("updateBeans", beans); // 状態をクライアントに送信
     });
 
-      // 豆のデータをクライアントに送信
+    // ゲーム終了時のCSVデータ生成
+    socket.on("requestCSV", () => {
+        const csvRows = ["Bean ID,Start Time,End Time,Duration (ms)"];
+        beans.forEach(bean => {
+            bean.touchTimes.forEach(time => {
+                const startTime = new Date(time.start).toISOString();
+                const endTime = time.end ? new Date(time.end).toISOString() : "N/A";
+                const duration = time.end ? time.end - time.start : "N/A";
+                csvRows.push(`${bean.id},${startTime},${endTime},${duration}`);
+            });
+        });
+
+        const csvData = csvRows.join("\n");
+        socket.emit("sendCSV", csvData);
+    });
+
+    // 豆のデータをクライアントに送信
     socket.on("requestBeanData", () => {
         socket.emit("sendBeanData", beans);
         console.log(`豆の状態をクライアント ${socket.id} に送信しました`);
