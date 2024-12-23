@@ -2,11 +2,14 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 
+const participants = []; // 参加者番号を管理
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
 app.use(express.static("public"));
+
 
 const beans = [
     { id: 0, left: 123, top: 235, isGlowing: false, touchedBy: [] },
@@ -63,6 +66,19 @@ setInterval(() => {
 io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
+
+
+    socket.on("setParticipantNumber", (number) => {
+        if (!participants.includes(number)) {
+            participants.push(number);
+            console.log(`参加者番号 ${number} が設定されました`);
+        }
+
+        // 2人が準備完了したら通知
+        if (participants.length === 2) {
+            io.emit("allReady");
+        }
+    });
 
     // socket.emit("initializeBeans", beans);
 
@@ -133,6 +149,12 @@ io.on("connection", (socket) => {
             if (bean.touchedBy.length < 2) bean.isGlowing = false;
         });
         io.emit("updateBeans", beans);
+
+        // 切断された場合、対応する参加者番号を削除
+        const index = participants.indexOf(socket.participantNumber);
+        if (index !== -1) {
+            participants.splice(index, 1);
+        }
     });
 });
 
