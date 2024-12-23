@@ -22,19 +22,20 @@ const beans = [
 ]; // 豆データ
 const players = {}; // 各プレイヤーの位置情報
 
-// // 豆を初期化する関数
-function initializeBeans() {
-    for (let i = 0; i < 5; i++) {
-        beans.push({
-            id: i,
-            left: 200 + Math.random() * 100,
-            top: 300 + Math.random() * 100,
-            touchedBy: [],
-            isGlowing: false
-        });
-    }
-    console.log("Beans initialized:", beans);
-}
+// 豆を初期化する関数
+// function initializeBeans() {
+//     for (let i = 0; i < 5; i++) {
+//         beans.push({
+//             id: i,
+//             left: 200 + Math.random() * 100,
+//             top: 300 + Math.random() * 100,
+//             touchedBy: [],
+//             isGlowing: false
+//         });
+//     }
+//     console.log("Beans initialized:", beans);
+// }
+
 
 
 // 定期的に豆の位置を更新してクライアントに送信
@@ -56,29 +57,14 @@ setInterval(() => {
     });
 }, 30); // 30msごとに中点計算を実行
 
-// サーバーで beans を送信する場所
-io.emit("initializeBeans", beans);
-console.log("Beans sent to client:", beans);
+
 
 
 io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
     players[socket.id] = { x: 0, y: 0 };
 
-    // ゲーム開始イベント
-    socket.on("startGame", () => {
-        console.log("ゲーム開始リクエストを受信しました。");
-        io.emit("gameStarted");
-    });
-
-    // スタートイベントを受け取る
-    socket.on("startGame", () => {
-        console.log("ゲーム開始リクエストを受信しました。");
-        // 全てのクライアントにゲーム開始を通知
-        io.emit("gameStarted");
-    });
-
-    socket.emit("initializeBeans", beans);
+    // socket.emit("initializeBeans", beans);
 
     // プレイヤーのマウス位置を受信
     socket.on("updateMousePosition", (position) => {
@@ -150,7 +136,7 @@ io.on("connection", (socket) => {
     });
 });
 
-initializeBeans();
+// initializeBeans();
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
