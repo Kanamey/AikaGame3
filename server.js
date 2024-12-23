@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
+const fs = require("fs");
 
 const app = express();
 const server = http.createServer(app);
@@ -21,22 +22,7 @@ const beans = [
     { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [] }
 ]; // 豆データ
 const players = {}; // 各プレイヤーの位置情報
-
-// 豆を初期化する関数
-// function initializeBeans() {
-//     for (let i = 0; i < 5; i++) {
-//         beans.push({
-//             id: i,
-//             left: 200 + Math.random() * 100,
-//             top: 300 + Math.random() * 100,
-//             touchedBy: [],
-//             isGlowing: false
-//         });
-//     }
-//     console.log("Beans initialized:", beans);
-// }
-
-
+const beanTimers = {}; // 各豆の時間を計測するオブジェクト
 
 // 定期的に豆の位置を更新してクライアントに送信
 setInterval(() => {
@@ -60,10 +46,12 @@ setInterval(() => {
 let isGameRunning = false; // ゲームが実行中かどうかを管理
 let countdown; // タイマーの状態を保持
 
+// CSVデータ保持
+let csvData = [["Bean ID", "Start Time", "End Time", "Duration (seconds)"]];
 
 io.on("connection", (socket) => {
-    console.log(`Player connected: ${socket.id}`);
-    players[socket.id] = { x: 0, y: 0 };
+    console.log(`Player connected: ${socket.id}`);// ユーザーが接続した際のログ
+    players[socket.id] = { x: 0, y: 0 };// プレイヤーの初期データをセット
 
     // スタートボタンが押されたらゲームを開始
     socket.on("startGame", () => {
@@ -84,8 +72,6 @@ io.on("connection", (socket) => {
         }
     });
 
-    // socket.emit("initializeBeans", beans);
-
     // プレイヤーのマウス位置を受信
     socket.on("updateMousePosition", (position) => {
         players[socket.id] = position;
@@ -97,13 +83,16 @@ io.on("connection", (socket) => {
         const bean = beans.find(b => b.id === beanId);
         if (!bean) return;
     
+        // プレイヤーを touchedBy 配列に追加
         if (!bean.touchedBy.includes(socket.id)) {
             bean.touchedBy.push(socket.id);
         }
     
+        // 2人のプレイヤーが同じ豆をクリックしたら
         if (bean.touchedBy.length === 2) {
             const p1 = players[bean.touchedBy[0]];
             const p2 = players[bean.touchedBy[1]];
+            beanTimers[beanId] = Date.now(); // 開始時刻を記録
     
             if (p1 && p2) {
                 bean.left = (p1.x + p2.x) / 2;
@@ -126,8 +115,19 @@ io.on("connection", (socket) => {
     });
     
     socket.on("beanReleased", (beanId) => {
-        const bean = beans.find(b => b.id === beanId);
+        const bean = beans.find(b => b.id === beanId);// 指定されたIDの豆を検索
         if (!bean) return;
+
+        // 時間計測が開始されていた場合、経過時間を記録
+        if (beanTimers[beanId]) {
+            const endTime = Date.now(); // 終了時刻
+            const startTime = beanTimers[beanId]; // 開始時刻
+            const duration = (endTime - startTime) / 1000; // 秒単位に変換
+
+            // CSVデータに記録
+            csvData.push([beanId, new Date(startTime).toISOString(), new Date(endTime).toISOString(), duration.toFixed(2)]);
+            delete beanTimers[beanId]; // 記録が終わったら削除
+        }
 
         // プレイヤーIDを touchedBy から削除
         bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
@@ -144,6 +144,13 @@ io.on("connection", (socket) => {
         io.emit("updateBeans", beans); // 状態をクライアントに送信
     });
 
+    // CSVファイルのリクエスト処理
+    socket.on("requestCSV", () => {
+        const csvContent = csvData.map(row => row.join(",")).join("\n"); // CSV形式に変換
+        fs.writeFileSync("game_data.csv", csvContent); // ファイルに保存
+        socket.emit("csvReady", "/game_data.csv"); // クライアントに通知
+    });
+
       // 豆のデータをクライアントに送信
     socket.on("requestBeanData", () => {
         socket.emit("sendBeanData", beans);
@@ -155,6 +162,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         delete players[socket.id];
         beans.forEach(bean => {
+            // touchedBy 配列から該当プレイヤーを削除
             bean.touchedBy = bean.touchedBy.filter(id => id !== socket.id);
             if (bean.touchedBy.length < 2) bean.isGlowing = false;
         });
@@ -162,7 +170,10 @@ io.on("connection", (socket) => {
     });
 });
 
-// initializeBeans();
+// CSVファイルをクライアントに提供するエンドポイント
+app.get("/game_data.csv", (req, res) => {
+    res.download("game_data.csv"); // ファイルをダウンロードとして提供
+});
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
