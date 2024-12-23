@@ -62,6 +62,17 @@
         background-color:  brown;
         box-shadow: 0 0 0px  brown;
       }
+      .start-button {
+        position: absolute;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
     </style>
   
 </head>
@@ -72,20 +83,8 @@
   </div>
 
   <!-- スタートボタン -->
-    <button id="start-button" style="
-    position: absolute;
-    top: 10%;
-    right: 5%;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    ">
-    スタート
-    </button>
+  <button id="start1-button" class="start-button" style="top: 10%; right: 5%;">スタート1</button>
+  <button id="start2-button" class="start-button" style="top: 20%; right: 5%;">スタート2</button>
 
 
   <script src="/socket.io/socket.io.js"></script>
@@ -124,7 +123,7 @@
       let timeLeft = 0.5 * 60; // 5分（秒換算）
       const countdownInterval = setInterval(() => {
         timeLeft--;
-        console.log(`Time left: ${timeLeft} seconds`);
+        console.log(`Time left for ${buttonId}: ${timeLeft} seconds`);
 
         if (timeLeft <= 0) {
           clearInterval(countdownInterval);
@@ -135,17 +134,24 @@
 
     // ゲーム終了メッセージを表示
     function displayEndMessage() {
-      const endMessage = document.createElement("div");
-      endMessage.style.position = "absolute";
-      endMessage.style.top = "50%";
-      endMessage.style.left = "50%";
-      endMessage.style.transform = "translate(-50%, -50%)";
-      endMessage.style.fontSize = "24px";
-      endMessage.style.fontWeight = "bold";
-      endMessage.style.color = "red";
-      endMessage.textContent = "ゲーム終了です";
+      // const endMessage = document.createElement("div");
+      // endMessage.style.position = "absolute";
+      // endMessage.style.top = "50%";
+      // endMessage.style.left = "50%";
+      // endMessage.style.transform = "translate(-50%, -50%)";
+      // endMessage.style.fontSize = "24px";
+      // endMessage.style.fontWeight = "bold";
+      // endMessage.style.color = "red";
+      // endMessage.textContent = "ゲーム終了です";
+      const endMessage = document.getElementById(messageId);
+        if (endMessage) {
+            endMessage.textContent = "ゲーム終了です";
+            endMessage.style.display = "block";
+        }
       document.body.appendChild(endMessage);
     }
+
+
 
     // マウス位置送信
     document.addEventListener("mousemove", (e) => {
@@ -287,6 +293,16 @@
         });
     }
   });
+
+  document.getElementById("start1-button").addEventListener("click", () => {
+        startCountdown("start1-button", "end-message-1");
+        document.getElementById("start1-button").disabled = true; // ボタンを無効化
+    });
+
+    document.getElementById("start2-button").addEventListener("click", () => {
+        startCountdown("start2-button", "end-message-2");
+        document.getElementById("start2-button").disabled = true; // ボタンを無効化
+    });
 
 
   // ビープ音を生成する関数
