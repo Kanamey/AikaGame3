@@ -57,7 +57,7 @@ setInterval(() => {
 }, 30); // 30msごとに中点計算を実行
 
 // サーバーで beans を送信する場所
-// io.emit("initializeBeans", beans);
+io.emit("initializeBeans", beans);
 console.log("Beans sent to client:", beans);
 
 
