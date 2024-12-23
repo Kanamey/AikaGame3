@@ -23,18 +23,18 @@ const beans = [
 const players = {}; // 各プレイヤーの位置情報
 
 // // 豆を初期化する関数
-// function initializeBeans() {
-//     for (let i = 0; i < 5; i++) {
-//         beans.push({
-//             id: i,
-//             left: 200 + Math.random() * 100,
-//             top: 300 + Math.random() * 100,
-//             touchedBy: [],
-//             isGlowing: false
-//         });
-//     }
-//     console.log("Beans initialized:", beans);
-// }
+function initializeBeans() {
+    for (let i = 0; i < 5; i++) {
+        beans.push({
+            id: i,
+            left: 200 + Math.random() * 100,
+            top: 300 + Math.random() * 100,
+            touchedBy: [],
+            isGlowing: false
+        });
+    }
+    console.log("Beans initialized:", beans);
+}
 
 
 // 定期的に豆の位置を更新してクライアントに送信
@@ -56,7 +56,9 @@ setInterval(() => {
     });
 }, 30); // 30msごとに中点計算を実行
 
-
+// サーバーで beans を送信する場所
+io.emit("initializeBeans", beans);
+console.log("Beans sent to client:", beans);
 
 
 io.on("connection", (socket) => {
