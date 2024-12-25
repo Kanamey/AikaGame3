@@ -19,7 +19,18 @@ const beans = [
     { id: 6, left: 375, top: 450, isGlowing: false, touchedBy: [] },
     { id: 7, left: 400, top: 480, isGlowing: false, touchedBy: [] },
     { id: 8, left: 350, top: 225, isGlowing: false, touchedBy: [] },
-    { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [] }
+    { id: 9, left: 150, top: 340, isGlowing: false, touchedBy: [] },
+    { id: 10, left: 110, top: 210, isGlowing: false, touchedBy: [] },
+    { id: 11, left: 140, top: 250, isGlowing: false, touchedBy: [] },
+    { id: 12, left: 170, top: 300, isGlowing: false, touchedBy: [] },
+    { id: 13, left: 200, top: 350, isGlowing: false, touchedBy: [] },
+    { id: 14, left: 230, top: 400, isGlowing: false, touchedBy: [] },
+    { id: 15, left: 260, top: 450, isGlowing: false, touchedBy: [] },
+    { id: 16, left: 290, top: 310, isGlowing: false, touchedBy: [] },
+    { id: 17, left: 320, top: 360, isGlowing: false, touchedBy: [] },
+    { id: 18, left: 350, top: 410, isGlowing: false, touchedBy: [] },
+    { id: 19, left: 380, top: 460, isGlowing: false, touchedBy: [] }
+   
 ]; // 豆データ
 let initialBeans = JSON.parse(JSON.stringify(beans)); // 初期状態をコピー
 const players = {}; // 各プレイヤーの位置情報
