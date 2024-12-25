@@ -162,12 +162,22 @@ io.on("connection", (socket) => {
         // initialBeans = JSON.parse(JSON.stringify(beans)); // 初期状態に戻す
         beans.splice(0, beans.length, ...JSON.parse(JSON.stringify(initialBeans)));// beansにinitialBeansを入れて初期状態に戻す
         io.emit("updateBeans", initialBeans); // 全クライアントに更新を通知
+        io.emit("updateBeans", beans);// クライアントに豆の初期位置を通知
         console.log("Beans have been reset to initial state");
-        
+
         // beanTimersを初期化
         for (const beanId in beanTimers) {
             delete beanTimers[beanId];
         }
+
+        // タイマーのリセット
+        if (countdown) {
+            clearInterval(countdown);
+            countdown = null;
+            isGameRunning = false;
+        }
+        io.emit("resetTimer"); // クライアントにタイマーのリセットを通知
+
     });
 
 
