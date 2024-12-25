@@ -208,7 +208,8 @@
 
     // 豆データ更新
     socket.on("updateBeans", (serverBeans) => {
-        beans = serverBeans;
+        // beans = serverBeans; 一旦消してみる
+        beans = updatedBeans; // サーバーから送られた更新された豆をローカルの配列に反映
         renderBeans();
     });
 
