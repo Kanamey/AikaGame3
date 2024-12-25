@@ -181,12 +181,14 @@
     resetButton.addEventListener("click", () => {
       socket.emit("resetGame");
       console.log("リセットボタンが押されました");
+
     });
 
     // サーバーから豆の状態が更新された際に描画を更新
     socket.on("updateBeans", (updatedBeans) => {
         beans = updatedBeans;
         renderBeans(); // 豆を再描画
+        console.log("Beans updated:", beans); // デバッグログ
     });
 
     // マウス位置送信
