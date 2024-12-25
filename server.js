@@ -170,6 +170,9 @@ io.on("connection", (socket) => {
             delete beanTimers[beanId];
         }
 
+        csvData = [["Bean ID", "Start Time", "End Time", "Duration (seconds)"]];
+        console.log("CSV data has been reset");
+
         // タイマーのリセット
         if (countdown) {
             clearInterval(countdown);
