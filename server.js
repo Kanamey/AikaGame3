@@ -158,7 +158,7 @@ io.on("connection", (socket) => {
         console.log(`豆の状態をクライアント ${socket.id} に送信しました`);
     });
 
-    socket.on("resetBeans", () => {
+    socket.on("resetGame", () => { //resetBeandをreserGameに変更
         // initialBeans = JSON.parse(JSON.stringify(beans)); // 初期状態に戻す
         beans.splice(0, beans.length, ...JSON.parse(JSON.stringify(initialBeans)));// beansにinitialBeansを入れて初期状態に戻す
         io.emit("updateBeans", initialBeans); // 全クライアントに更新を通知
