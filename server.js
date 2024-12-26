@@ -90,7 +90,7 @@ io.on("connection", (socket) => {
     socket.on("startGame", () => {
         if (!isGameRunning) { // ゲームがまだ実行中でない場合のみ開始
             isGameRunning = true;
-            let timeLeft = 5 * 60; // 5分（秒）
+            let timeLeft = 2 * 60; // 5分（秒）
 
             countdown = setInterval(() => {
                 timeLeft--;
