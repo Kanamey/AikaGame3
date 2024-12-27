@@ -91,6 +91,10 @@
         top: 160px; /* 出力ボタンをスタートボタンの下に */
       }
 
+      #check-data-button {
+        top: 210px; /* 出力ボタンをスタートボタンの下に */
+      }
+
 
       .button:hover {
         background-color: #0056b3;
@@ -114,6 +118,7 @@
     <button id="output-button" class="button">出力</button>
     <button id="reset-button" class="button">リセット</button> <!-- リセットボタンを追加 -->
     <button id="sound-button" class="button">音を鳴らす</button><!-- Sound ボタン -->
+    <button id="check-data-button" class="button">データチェック</button>
 
   </div>
   <script src="/socket.io/socket.io.js"></script>
@@ -135,6 +140,17 @@
     const socket = io();
     const container = document.getElementById("game-container");
     let beans = [];
+
+    const checkDataButton = document.getElementById("check-data-button");
+
+    checkDataButton.addEventListener("click", () => {
+      console.log("データチェックボタンが押されました");
+      socket.emit("checkData"); // サーバーにデータチェックリクエストを送信
+    });
+
+    socket.on("sendCsvData", (data) => {
+      console.log("受け取ったCSVデータ:", data);
+    });
 
     // // タイマーで時間計測・時間指定
     // startButton.addEventListener("click", () => {
