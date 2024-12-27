@@ -226,6 +226,11 @@ io.on("connection", (socket) => {
         });
         io.emit("updateBeans", beans);
     });
+
+    socket.on("checkData", () => {
+        console.log("データチェックリクエストを受信しました");
+        socket.emit("sendCsvData", csvData);
+    });
 });
 
 // CSVファイルをクライアントに提供するエンドポイント
